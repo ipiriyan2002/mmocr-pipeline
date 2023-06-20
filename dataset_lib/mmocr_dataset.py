@@ -1,4 +1,4 @@
-from utils.dataset_utils import getPolygon
+from utils.box_translot_utils import voc2quad
 import os
 import json
 from PIL import Image
@@ -61,7 +61,7 @@ class MMOCRDataset:
             #Bounding box, polygon, text
             box = inst["bbox"]
             text = inst["text"]
-            poly = getPolygon(box)
+            poly = voc2quad(box)
 
             #Ignore Key
             if "ignore" in inst.keys():
