@@ -1,0 +1,23 @@
+Found cached dataset parquet (/home/ik3g20/.cache/huggingface/datasets/naver-clova-ix___parquet/naver-clova-ix--cord-v2-c97f979311033a44/0.0.0/2a3b91fbd88a2c90d1dbbb32b460cf621d31bd5b05b934492fdef7d8d6f236ec)
+Found cached dataset parquet (/home/ik3g20/.cache/huggingface/datasets/naver-clova-ix___parquet/naver-clova-ix--cord-v2-c97f979311033a44/0.0.0/2a3b91fbd88a2c90d1dbbb32b460cf621d31bd5b05b934492fdef7d8d6f236ec)
+Found cached dataset parquet (/home/ik3g20/.cache/huggingface/datasets/naver-clova-ix___parquet/naver-clova-ix--cord-v2-c97f979311033a44/0.0.0/2a3b91fbd88a2c90d1dbbb32b460cf621d31bd5b05b934492fdef7d8d6f236ec)
+==================================================Preparing Dataset==================================================
+Preparing dataset for train
+Preparing JSON file for detection task
+Preparing JSON file for recognition task
+Croping and Downloading for recognition task
+Croping and Downloading finished
+Preparing dataset for test
+Preparing JSON file for detection task
+Preparing JSON file for recognition task
+Croping and Downloading for recognition task
+Croping and Downloading finished
+Preparing dataset for val
+Preparing JSON file for detection task
+Preparing JSON file for recognition task
+Croping and Downloading for recognition task
+Croping and Downloading finished
+==================================================Preparing Model Configurations==================================================
+Preparing model for textdet
+textdet configuration file can be found in : ../mmocr/configs/textdet/dbnet/dbnet_resnet18_fpnc_40_cordv2.py.py
+==================================================Finished preparing==================================================

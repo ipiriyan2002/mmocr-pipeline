@@ -23,36 +23,41 @@ def parse_args():
 def main():
     args = parse_args()
 
-    dataset_dict = args.config.dataset_dict
-    model_dict = args.config.model_dict
+    config = Config.fromfile(args.config)
+    dataset_dict = config.dataset_dict
+    model_dict = config.model_dict
 
     assert not(dataset_dict is None), "Dataset configuration not providied"
     assert not(model_dict is None), "Model configuration not provided"
 
+    print(f"{'=' * 50}Preparing Dataset{'=' * 50}")
     #Prepare dataset
     dataset_type = dataset_dict["type"]
     assert (dataset_type in ids.ids.keys()), f"{dataset_type} not available\n Available dataset descriptions include: {ids.ids.keys()}\n " \
                                              f"If a custom dataset has been created, include reference to that class " \
                                              f"in dataset_ids.py and __init__.py files in dataset_lib folder "
-    dataset = ids.ids[dataset_type](*dataset_dict["init_params"])
+
+    dataset = ids.ids[dataset_type](**dataset_dict["init_params"])
 
     splits = list(dataset_dict["prepare_params"].keys())
 
     for split in splits:
         if not(split is None):
-            prep_dict = dataset.prepare(*dataset_dict["prepare_params"][split])
+            print(f"Preparing dataset for {split}")
+            prep_dict = dataset.prepare(**dataset_dict["prepare_params"][split])
 
             dataset(prep_dict, split)
 
     #Prepare Model
-
+    print(f"{'=' * 50}Preparing Model Configurations{'=' * 50}")
     tasks = ["textdet", "textrecog"]
 
     for task in tasks:
         task_dict = model_dict[task]
 
         if not(task_dict is None):
-            model_config = ModelConfig(task, *task_dict)
+            print(f"Preparing model for {task}")
+            model_config = ModelConfig(task, **task_dict)
 
             config = model_config()
 
@@ -60,7 +65,7 @@ def main():
 
             print(f"{task} configuration file can be found in : {save_path}", flush=True)
 
-
+    print(f"{'=' * 50}Finished preparing{'=' * 50}")
 
 if __name__ == "__main__":
     main()

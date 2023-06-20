@@ -108,12 +108,13 @@ class TextRecModelConfig:
     def __call__(self):
 
         model_name = self.model
-        base_path = f"configs/textrecog/{model_name}/"
+        base_path = f"../configs/textrecog/{model_name}/"
+        mmocr_path = f"../mmocr/configs/textrecog/{model_name}/"
 
         if os.path.exists(base_path):
             save_path = os.path.join(base_path, self.fname)
-        elif os.path.exists(os.path.join("mmocr", base_path)):
-            save_path = os.path.join("mmocr", base_path, self.fname)
+        elif os.path.exists(mmocr_path):
+            save_path = os.path.join(mmocr_path, self.fname)
         else:
             save_path = f"./{self.fname}"
 
