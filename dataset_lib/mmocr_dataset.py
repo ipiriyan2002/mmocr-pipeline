@@ -1,4 +1,4 @@
-from utils.box_translot_utils import voc2quad
+from utils.box_translator_utils import voc2quad
 import os
 import json
 from PIL import Image
@@ -21,7 +21,10 @@ class MMOCRDataset:
 
         #Save Directory
         if save_dir is None:
-            self.save_dir = os.path.join("./data/", f"{name}/")
+            if os.path.exists("../mmocr/data/"):
+                self.save_dir = os.path.join("../mmocr/data/", f"{name}/")
+            else:
+                self.save_dir = os.path.join("../data/", f"{name}/")
         else:
             self.save_dir = save_dir
 
@@ -46,7 +49,7 @@ class MMOCRDataset:
 
     def saveJson(self, final_dict, split, task):
 
-        save_path = os.path.join(self.save_dir, f"{split}_{task}.json")
+        save_path = os.path.join(self.save_dir, f"text{task}_{split}.json")
 
         with open(save_path, "w") as f:
             json.dump(final_dict, f)
@@ -81,32 +84,39 @@ class MMOCRDataset:
         #all datalists
         data_list = []
 
-        for index, img in data_dict.keys():
+        for index, img in enumerate(data_dict.keys()):
 
             img_dict = data_dict[img]
 
-            open_img = Image.open(img_dict["img_path"])
+            open_img = Image.open(os.path.join(self.save_dir,img_dict["img"]))
             width, height = open_img.size
 
             instances = self.getAbstractInstance(img_dict)
 
-            data_list.append(dict(img_path=img_dict["img_path"], height=height, width=width, instances=instances))
+            data_list.append(dict(img_path=img_dict["img"], height=height, width=width, instances=instances))
 
         #final dict for detection task
-        final_dict = dict(metainfo=meta_info_default, data_list=datalist)
+        final_dict = dict(metainfo=meta_info_default, data_list=data_list)
         self.saveJson(final_dict, split, "det")
 
     def retreiveCropsDict(self, img_name, img_path, anns, save_dir):
 
-        open_img = Image.open(img_path)
+
+        open_img = Image.open(os.path.join(self.save_dir,img_path))
 
         all_crops = []
 
         for index, ann_dict in enumerate(anns):
+            img_name = img_name.split(".")[0]
             save_img_name = os.path.join(save_dir,f"{img_name}_{index}.jpg")
-            open_img.crop(ann_dict["bbox"]).save(save_img_name)
+            
+            try:
+                open_img.crop(ann_dict["bbox"]).save(save_img_name)
+            except:
+                continue
 
-            out_dict = dict(img_path=save_img_name, instances=list(dict(text=ann_dict["text"])))
+            img_path = '/'.join(save_img_name.split("/")[-4:])
+            out_dict = dict(img_path=img_path, instances=list(dict(text=ann_dict["text"])))
 
             all_crops.append(out_dict)
 
@@ -121,20 +131,26 @@ class MMOCRDataset:
         data_list = []
 
         #Save path for crops
-        save_crop_path = os.path.join(self.save_dir, f"Recog/{split}/")
+        save_crop_path = os.path.join(self.save_dir, f"images/Recog/{split}/")
 
-        for index, img in data_dict.keys():
+        try:
+            os.makedirs(save_crop_path)
+        except:
+            pass
+
+        print("Croping and Downloading for recognition task")
+        for index, img in enumerate(data_dict.keys()):
 
             img_dict = data_dict[img]
 
             instances = self.getAbstractInstance(img_dict)
 
-            all_img_crops = self.retreiveCropsDict(img, img_dict["img_path"], instances, save_crop_path)
+            all_img_crops = self.retreiveCropsDict(img, img_dict["img"], instances, save_crop_path)
 
             data_list.extend(all_img_crops)
-
+        print("Croping and Downloading finished")
         #final dict for detection task
-        final_dict = dict(metainfo=meta_info_default, data_list=datalist)
+        final_dict = dict(metainfo=meta_info_default, data_list=data_list)
         self.saveJson(final_dict, split, "recog")
 
     def __call__(self, data_dict, split):
@@ -151,7 +167,9 @@ class MMOCRDataset:
         """
 
         if self.isDet:
+            print("Preparing JSON file for detection task")
             self.createDetJsonFile(data_dict, split)
 
         if self.isRecog:
+            print("Preparing JSON file for recognition task")
             self.createRecogJsonFile(data_dict, split)

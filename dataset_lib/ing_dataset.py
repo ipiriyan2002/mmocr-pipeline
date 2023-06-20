@@ -3,7 +3,7 @@ import json
 from PIL import Image
 from dataset_lib.mmocr_dataset import MMOCRDataset
 
-class ing_dataset(MMOCRDataset):
+class IngDataset(MMOCRDataset):
 
     def __init__(self, name, tasks, save_dir=None):
         super().__init__(name, tasks, save_dir)

@@ -104,12 +104,13 @@ class TextDetModelConfig:
     def __call__(self):
 
         model_name = self.model if (self.model != "mask-rcnn") else "maskrcnn"
-        base_path = f"configs/textdet/{model_name}/"
+        base_path = f"../configs/textdet/{model_name}/"
+        mmocr_path = f"../mmocr/configs/textdet/{model_name}/"
 
         if os.path.exists(base_path):
             save_path = os.path.join(base_path, self.fname)
-        elif os.path.exists(os.path.join("mmocr", base_path)):
-            save_path = os.path.join("mmocr", base_path, self.fname)
+        elif os.path.exists(mmocr_path):
+            save_path = os.path.join(mmocr_path, self.fname)
         else:
             save_path = f"./{self.fname}"
 

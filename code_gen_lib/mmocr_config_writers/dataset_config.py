@@ -24,8 +24,8 @@ class DatasetConfig(BaseConfig):
         if save_path is None:
             if os.path.exists(self.DEFAULT_PATH):
                 return os.path.join(self.DEFAULT_PATH, f"{self.dataset}.py")
-            elif os.path.exists(os.path.join("mmocr", self.DEFAULT_PATH)):
-                return os.path.join("mmocr", self.DEFAULT_PATH, f"{self.dataset}.py")
+            elif os.path.exists(os.path.join("../mmocr", self.DEFAULT_PATH)):
+                return os.path.join("../mmocr", self.DEFAULT_PATH, f"{self.dataset}.py")
             else:
                 return f"./{self.dataset}.py"
         else:
