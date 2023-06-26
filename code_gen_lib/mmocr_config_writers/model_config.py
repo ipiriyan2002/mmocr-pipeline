@@ -11,7 +11,7 @@ class ModelConfig(BaseConfig):
 
     def __init__(self,
                  task,
-                 dataset,
+                 train_datasets, val_datasets, test_datasets,
                  model,
                  backbone=None,
                  neck=None,
@@ -20,13 +20,14 @@ class ModelConfig(BaseConfig):
                  schedule=None,
                  has_val=False,
                  train_batch_size=16,
-                 test_batch_size=1):
+                 test_batch_size=1, contents=dict()):
 
-        super().__init__(dataset, task)
+        super().__init__(task)
 
         self.task = task
-        self.dataset = dataset
-
+        self.train_datasets = train_datasets
+        self.val_datasets = val_datasets
+        self.test_datasets = test_datasets
         assert (model in self.DEFAULT_MODELS[task])
 
         self.model = model
@@ -38,6 +39,7 @@ class ModelConfig(BaseConfig):
         self.has_val = has_val
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
+        self.contents = contents
         
 
 
@@ -48,11 +50,11 @@ class ModelConfig(BaseConfig):
 
         if self.task == "textdet":
 
-            return TextDetModelConfig(self.dataset, self.model, self.backbone,
+            return TextDetModelConfig(self.train_datasets,self.val_datasets, self.test_datasets, self.model, self.backbone,
                                       self.neck, self.epochs, self.schedule,
-                                      self.has_val, self.train_batch_size, self.test_batch_size)
+                                      self.has_val, self.train_batch_size, self.test_batch_size, self.contents)
 
         else:
-            return TextRecModelConfig(self.dataset, self.model, self.base, self.epochs, self.schedule
-                                      ,self.has_val, self.train_batch_size, self.test_batch_size)
+            return TextRecModelConfig(self.train_datasets,self.val_datasets, self.test_datasets, self.model, self.base, self.epochs, self.schedule
+                                      ,self.has_val, self.train_batch_size, self.test_batch_size, self.contents)
     

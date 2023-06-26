@@ -3,10 +3,7 @@ import logging
 import os
 import os.path as osp
 
-from mmengine.config import Config, DictAction
-from mmengine.logging import print_log
-from mmengine.registry import RUNNERS
-from mmengine.runner import Runner
+from mmengine.config import Config
 
 #Custom Imports
 from dataset_lib import dataset_ids as ids
@@ -15,20 +12,14 @@ from code_gen_lib.mmocr_config_writers.model_config import ModelConfig
 def parse_args():
     parser = argparse.ArgumentParser(description='Prepare config files for a model')
     parser.add_argument('config', help='Preparation configuration file')
+    parser.add_argument('--no-dataset', action='store_true', default=False, help="Do not prepare dataset")
+    parser.add_argument('--no-det-model', action='store_true', default=False, help="Do not prepare detection model")
+    parser.add_argument('--no-recog-model', action='store_true', default=False, help="Do not prepare recognition model")
     args = parser.parse_args()
 
     return args
 
-
-def main():
-    args = parse_args()
-
-    config = Config.fromfile(args.config)
-    dataset_dict = config.dataset_dict
-    model_dict = config.model_dict
-
-    assert not(dataset_dict is None), "Dataset configuration not providied"
-    assert not(model_dict is None), "Model configuration not provided"
+def processDatset(dataset_dict):
 
     print(f"{'=' * 50}Preparing Dataset{'=' * 50}")
     #Prepare dataset
@@ -45,25 +36,49 @@ def main():
         if not(split is None):
             print(f"Preparing dataset for {split}")
             prep_dict = dataset.prepare(**dataset_dict["prepare_params"][split])
-
+            print(f"Preparing configuration files and cropping images...")
             dataset(prep_dict, split)
+            print(f"Finished preparing for {split}")
+        else:
+            print(f"Skipping {split} preparation")
+
+
+def processModel(task_dict, task):
+
+    if not(task_dict is None):
+        print(f"Preparing model for {task}")
+        model_config = ModelConfig(task, **task_dict)
+
+        config = model_config()
+
+        save_path = config()
+
+        print(f"{task} configuration file can be found in : {save_path}", flush=True)
+
+def main():
+    args = parse_args()
+
+    config = Config.fromfile(args.config)
+    dataset_dict = config.dataset_dict
+    det_model_dict = config.det_model_dict
+    recog_model_dict = config.recog_model_dict
+
+    #Prepare Dataset
+    if not(dataset_dict is None) and not(args.no_dataset):
+        if isinstance(dataset_dict, dict):
+            dataset_dict = [dataset_dict]
+
+        for dataset in dataset_dict:
+            processDatset(dataset)
 
     #Prepare Model
     print(f"{'=' * 50}Preparing Model Configurations{'=' * 50}")
-    tasks = ["textdet", "textrecog"]
 
-    for task in tasks:
-        task_dict = model_dict[task]
+    if not(args.no_det_model):
+        processModel(det_model_dict, "textdet")
 
-        if not(task_dict is None):
-            print(f"Preparing model for {task}")
-            model_config = ModelConfig(task, **task_dict)
-
-            config = model_config()
-
-            save_path = config()
-
-            print(f"{task} configuration file can be found in : {save_path}", flush=True)
+    if not(args.no_recog_model):
+        processModel(recog_model_dict, "textrecog")
 
     print(f"{'=' * 50}Finished preparing{'=' * 50}")
 

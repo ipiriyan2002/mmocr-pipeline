@@ -18,20 +18,23 @@ class StatementBlock(CodeBlock):
     def __init__(self, statements):
         super().__init__()
         assert (isinstance(statements, list)), "Provide all statements as a list of strings"
-        assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
+        if statements != []:
+            assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
         self.statements = statements
 
     def __str__(self, indent=""):
 
-        result = []
+        if self.statements == []:
+            return ""
 
+        result = []
+        
         for statement in self.statements:
 
             if isinstance(statement, CodeBlock):
                 result.append(statement.__str__(indent))
             else:
                 result.append(indent+statement+self.LINE_DELIMITER)
-
         return "".join(result)
 
 
@@ -45,7 +48,8 @@ class ConditionBlock(CodeBlock):
     def __init__(self, condition, statements, block_type="if"):
         super().__init__()
         assert (isinstance(statements, list)), "Provide all statements as a list of strings"
-        assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
+        if statements != []:
+            assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
         self.statements = statements
 
         assert isinstance(condition, str), "Expected condition to be a string statement"
@@ -66,6 +70,9 @@ class ConditionBlock(CodeBlock):
             return indent + "else:" + self.LINE_DELIMITER
 
     def __str__(self, indent=""):
+
+        if self.statements == []:
+            return ""
 
         result = [self.getBlock(indent)]
 
@@ -92,7 +99,8 @@ class FunctionBlock:
     def __init__(self, func_name, parameters, statements):
         super().__init__()
         assert (isinstance(statements, list)), "Provide all statements as a list of strings"
-        assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
+        if statements != []:
+            assert any(isinstance(statement, (str,CodeBlock)) for statement in statements), "Expected statements to be in string format"
         self.statements = statements
 
         assert isinstance(parameters, str), "Expected parameters to be a string statement"
@@ -107,6 +115,9 @@ class FunctionBlock:
         return indent + f"def {self.func_name}({self.parameters}):" + self.LINE_DELIMITER
 
     def __str__(self, indent=""):
+
+        if self.statements == []:
+            return ""
 
         result = [self.getBlock(indent)]
 
