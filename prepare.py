@@ -7,14 +7,14 @@ from mmengine.config import Config
 
 #Custom Imports
 from dataset_lib import dataset_ids as ids
-from code_gen_lib.mmocr_config_writers.model_config import ModelConfig
+from mmocr_config_writers.model_config import ModelConfig
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Prepare config files for a model')
     parser.add_argument('config', help='Preparation configuration file')
-    parser.add_argument('--no-dataset', action='store_true', default=False, help="Do not prepare dataset")
-    parser.add_argument('--no-det-model', action='store_true', default=False, help="Do not prepare detection model")
-    parser.add_argument('--no-recog-model', action='store_true', default=False, help="Do not prepare recognition model")
+    parser.add_argument('-nd', '--no-dataset', action='store_true', default=False, help="Do not prepare dataset")
+    parser.add_argument('-ndm','--no-det-model', action='store_true', default=False, help="Do not prepare detection model")
+    parser.add_argument('-nrm','--no-recog-model', action='store_true', default=False, help="Do not prepare recognition model")
     args = parser.parse_args()
 
     return args

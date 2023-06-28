@@ -1,11 +1,25 @@
-
-
+"""
 dataset_dict = dict(
     type="cordv2",
     init_params= dict(name="cordv2", tasks = ["det", "recog"], save_dir=None),
-    prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train"),
-                        test=dict(img_paths=None, ann_paths=None, split="test"),
-                        val=dict(img_paths=None, ann_paths=None, split="val"))
+    prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train", generate=dict(
+        det_model="dbnet", det_weights=None, rec_model="satrn", rec_weights=None, device="cuda:0", save_dir="./box_gen/", max_neighbours=5
+    )),
+                        test=dict(img_paths=None, ann_paths=None, split="test", generate=dict(
+                            det_model="dbnet", det_weights=None, rec_model="satrn", rec_weights=None, device="cuda:0", save_dir="./box_gen/", max_neighbours=5
+                        )),
+                        val=dict(img_paths=None, ann_paths=None, split="val"), generate=dict(
+            det_model="dbnet", det_weights=None, rec_model="satrn", rec_weights=None, device="cuda:0", save_dir="./box_gen/", max_neighbours=5
+        ))
+)
+"""
+
+dataset_dict = dict(
+    type="cordv2",
+    init_params= dict(name="cordv2", tasks = ["det"], save_dir=None),
+    prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train", generate=None),
+                        test=dict(img_paths=None, ann_paths=None, split="test", generate=None),
+                        val=dict(img_paths=None, ann_paths=None, split="val"), generate=None)
 )
 
 

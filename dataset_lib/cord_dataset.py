@@ -8,8 +8,8 @@ from datasets import load_dataset
 
 class CordDataset(MMOCRDataset):
 
-    def __init__(self, name, tasks, save_dir=None):
-        super().__init__(name, tasks, save_dir)
+    def __init__(self, name, tasks, save_dir=None, generate=None):
+        super().__init__(name, tasks, save_dir, generate)
 
         self.hugging_face_path = "naver-clova-ix/cord-v2"
 

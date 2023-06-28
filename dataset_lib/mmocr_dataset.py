@@ -3,12 +3,13 @@ import os
 import json
 from PIL import Image
 from abc import ABC, abstractmethod
+from bbox_gen.generator import MMOCRBoxGenerator
 
 
 class MMOCRDataset(ABC):
     DEF_TASK_NAMES = ["det", "recog"]
 
-    def __init__(self, name, tasks, save_dir=None):
+    def __init__(self, name, tasks, save_dir=None, generator=None):
 
         assert isinstance(tasks, list), f"Expected tasks to be a list, got {type(tasks)}"
 
@@ -33,6 +34,11 @@ class MMOCRDataset(ABC):
             os.makedirs(self.save_dir)
         except:
             pass
+
+        if generator == None:
+            self.generator = MMOCRBoxGenerator()
+        else:
+            self.generator = MMOCRBoxGenerator(**generator)
 
     """
     Check if given tasks is possible
@@ -75,7 +81,13 @@ class MMOCRDataset(ABC):
             else:
                 ignore = 0
 
-            instances.append(dict(text=text, bbox=box, bbox_label=0, polygon=poly, ignore=ignore))
+            #Label
+            if "label" in inst.keys():
+                label = inst["label"]
+            else:
+                label=0
+
+            instances.append(dict(text=text, bbox=box, bbox_label=label, polygon=poly, ignore=ignore))
 
         return instances
 
@@ -159,7 +171,7 @@ class MMOCRDataset(ABC):
         Assumes data_dict is of format:
         {<<img_name>> : {
             img:<<img_path>>,
-            instances: [{bbox:[x1,y1,x3,y3], text:<<text at bbox loc>>, <<optional>>ignore:Boolean}...]
+            instances: [{bbox:[x1,y1,x3,y3], text:<<text at bbox loc>>, <<optional>>ignore:Boolean, <<optional>>label:<<class label for box>>}...]
             }
         }
         :param data_dict:
