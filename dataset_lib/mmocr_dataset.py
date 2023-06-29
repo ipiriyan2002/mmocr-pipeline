@@ -35,7 +35,8 @@ class MMOCRDataset(ABC):
         except:
             pass
 
-        if generator == None:
+
+        if generator is None:
             self.generator = MMOCRBoxGenerator()
         else:
             self.generator = MMOCRBoxGenerator(**generator)
@@ -81,13 +82,7 @@ class MMOCRDataset(ABC):
             else:
                 ignore = 0
 
-            #Label
-            if "label" in inst.keys():
-                label = inst["label"]
-            else:
-                label=0
-
-            instances.append(dict(text=text, bbox=box, bbox_label=label, polygon=poly, ignore=ignore))
+            instances.append(dict(text=text, bbox=box, bbox_label=0, polygon=poly, ignore=ignore))
 
         return instances
 
@@ -171,7 +166,7 @@ class MMOCRDataset(ABC):
         Assumes data_dict is of format:
         {<<img_name>> : {
             img:<<img_path>>,
-            instances: [{bbox:[x1,y1,x3,y3], text:<<text at bbox loc>>, <<optional>>ignore:Boolean, <<optional>>label:<<class label for box>>}...]
+            instances: [{bbox:[x1,y1,x3,y3], text:<<text at bbox loc>>, <<optional>>ignore:Boolean}...]
             }
         }
         :param data_dict:

@@ -6,8 +6,8 @@ from dataset_lib.mmocr_dataset import MMOCRDataset
 
 class MemeDataset(MMOCRDataset):
 
-    def __init__(self, name, tasks, save_dir=None, generate=None):
-        super().__init__(name, tasks, save_dir, generate)
+    def __init__(self, name, tasks, save_dir=None, generator=None):
+        super().__init__(name, tasks, save_dir, generator)
 
     def readPath(self, ann_path, img_paths, split):
         datadict = {}

@@ -22,7 +22,19 @@ def getTextMatchCheckers(k, max_, max_len_):
 
 #Given the original sentence, return the order of texts
 def getTextOrder(text, max_=5):
-    textSplit = text.split(' ')
-    textOrderDict = {k:{'original':v, 'matched':False, 'pred_matchers':getTextMatchCheckers(k,max_,len(textSplit))} for k,v in enumerate(textSplit)}
+    sepSentence = text.split('/n')
+    num_sep_sent = len(sepSentence)
 
-    return textOrderDict
+    final_dict = {}
+    prev_k = 0
+    for index, sep_sent in enumerate(sepSentence):
+        textSplit = sep_sent.split(' ')
+        index = index if num_sep_sent > 1 else -1
+        textOrderDict = {(k+prev_k):{'original':v, 'matched':False, 'sent_order':index,
+                            'pred_matchers':getTextMatchCheckers(k,max_,len(textSplit))} for k,v in enumerate(textSplit)}
+
+        prev_k = len(list(textOrderDict.keys()))
+
+        final_dict.update(textOrderDict)
+
+    return final_dict

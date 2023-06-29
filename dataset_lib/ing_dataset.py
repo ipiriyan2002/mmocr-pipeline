@@ -6,8 +6,8 @@ from dataset_lib.mmocr_dataset import MMOCRDataset
 
 class IngDataset(MMOCRDataset):
 
-    def __init__(self, name, tasks, save_dir=None, generate=None):
-        super().__init__(name, tasks, save_dir, generate)
+    def __init__(self, name, tasks, save_dir=None, generator=None):
+        super().__init__(name, tasks, save_dir, generator)
 
     """
     Given a dictionary format of a COCO format, return VOC format bounding box
@@ -30,7 +30,7 @@ class IngDataset(MMOCRDataset):
     Perform basic text abstraction such as removing line delimiters and non-training characters (for now: _@_)
     """
     def abstractText(self, text):
-        text = text.replace("\n", " ")
+        #text = text.replace("\n", " ")
         text = text.replace("_@_", "")
 
         return text.strip()
@@ -93,9 +93,27 @@ class IngDataset(MMOCRDataset):
 
         for index, fname in data["filename"]:
 
-            instances = [self.abstractDataDict(ann) for ann in eval(data["annotation"][index])]
+            abs_instances = [self.abstractDataDict(ann) for ann in eval(data["annotation"][index])]
 
             image_path = self.getImagePath(img_paths, f"{fname}.jpg")
+
+            crop_texts = []
+            crop_boxes = []
+
+            not_added = []
+            for abs_inst in abs_instances:
+
+                if ("/n" in abs_inst["text"]):
+                    crop_boxes.append(abs_inst["bbox"])
+                    crop_texts.append(abs_inst["text"])
+                else:
+                    not_added.append(abs_inst)
+
+            out = self.generator(image_path, crop_texts, crop_boxes)
+
+            instances = [dict(text=v['original'], bbox=v['box'], ignore=v['ignore']) for k,v in out.items() if not(v['box'] == [])]
+
+            instances.extend(abs_inst)
             
             data_dict[fname] = dict(img=image_path, instances=instances)
 
