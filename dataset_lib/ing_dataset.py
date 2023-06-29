@@ -107,7 +107,7 @@ class IngDataset(MMOCRDataset):
             not_added = []
             for abs_inst in abs_instances:
 
-                if ("/n" in abs_inst["text"]):
+                if ("\n" in abs_inst["text"]):
                     crop_boxes.append(abs_inst["bbox"])
                     crop_texts.append(abs_inst["text"])
                 else:
