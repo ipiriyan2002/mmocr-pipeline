@@ -94,7 +94,7 @@ class CordDataset(MMOCRDataset):
 
         return data_dict
 
-    def prepare(self, img_paths=None, ann_paths =None, split=None):
+    def process(self, img_paths=None, ann_paths =None, split=None):
         """
         Prepares a data_dict for further json creation
         :param csv_path:

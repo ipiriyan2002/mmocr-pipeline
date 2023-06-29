@@ -119,7 +119,8 @@ class MMOCRBoxGenerator:
         out = self.fullParse(crop_image, text)
 
         for key, value in out.items():
-            value["box"] = self.normalise2original(value["box"], (orig_width, orig_height), (crop_width, crop_height), bbox)
+            if value["box"] != []:
+                value["box"] = self.normalise2original(value["box"], (orig_width, orig_height), (crop_width, crop_height), bbox)
 
         return out
 
@@ -146,8 +147,13 @@ class MMOCRBoxGenerator:
 
     def __call__(self, image, texts, boxes=None):
 
+
         assert isinstance(texts, (str, list)), "Expected texts to be a list of texts / a singular string for given image"
-        assert any(isinstance(box, list) for box in boxes), "Expected a list of bounding boxes, where the elements are of VOC format [xmin, ymin, xmax, ymax]"
+
+        if not(boxes is None):
+            assert any(isinstance(box, list) for box in boxes), f"Expected a list of bounding boxes, where the elements are of VOC format [xmin, ymin, xmax, ymax]\n" \
+                                                                    f"but got {boxes} and {texts}"
+
 
         if isinstance(texts, str):
             texts = [texts]

@@ -25,8 +25,10 @@ class MMOCRDataset(ABC):
         if save_dir is None:
             if os.path.exists("../mmocr/data/"):
                 self.save_dir = os.path.join("../mmocr/data/", f"{name}/")
-            else:
+            elif os.path.exists("../data/"):
                 self.save_dir = os.path.join("../data/", f"{name}/")
+            else:
+                self.save_dir = os.path.join("./data/", f"{name}/")
         else:
             self.save_dir = save_dir
 
@@ -98,7 +100,10 @@ class MMOCRDataset(ABC):
         for index, img in enumerate(data_dict.keys()):
             img_dict = data_dict[img]
 
-            open_img = Image.open(os.path.join(self.save_dir, img_dict["img"]))
+            try:
+                open_img = Image.open(os.path.join(self.save_dir, img_dict["img"]))
+            except:
+                open_img = Image.open(img_dict["img"])
             width, height = open_img.size
 
             instances = self.getAbstractInstance(img_dict)
@@ -183,5 +188,5 @@ class MMOCRDataset(ABC):
             self.createRecogJsonFile(data_dict, split)
 
     @abstractmethod
-    def process(self, img_paths=None, ann_paths=None, split=None):
+    def process(self, img_paths, ann_paths, split):
         pass

@@ -26,7 +26,9 @@ dataset_dict = dict(
 
 #Include evaluation writing later
 det_model_dict = dict(
-    dataset="cordv2.py",
+    train_datasets=["cordv2.py"],
+    val_datasets=["cordv2.py"],
+    test_datasets=["cordv2.py"],
     model="dbnet",
     backbone="resnet18",
     neck="fpnc",

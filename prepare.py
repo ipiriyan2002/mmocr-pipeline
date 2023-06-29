@@ -33,9 +33,9 @@ def processDatset(dataset_dict):
     splits = list(dataset_dict["prepare_params"].keys())
 
     for split in splits:
-        if not(split is None):
+        if not(dataset_dict["prepare_params"][split] is None):
             print(f"Preparing dataset for {split}")
-            prep_dict = dataset.prepare(**dataset_dict["prepare_params"][split])
+            prep_dict = dataset.process(**dataset_dict["prepare_params"][split])
             print(f"Preparing configuration files and cropping images...")
             dataset(prep_dict, split)
             print(f"Finished preparing for {split}")

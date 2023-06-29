@@ -44,7 +44,7 @@ class MemeDataset(MMOCRDataset):
         return datadict
 
 
-    def prepare(self, img_paths, ann_paths, split):
+    def process(self, img_paths, ann_paths, split):
         assert isinstance(ann_paths, (str, list)), "Provide a list of annotation paths or a singular path"
         assert isinstance(img_paths, (str, list)), "Provide a list of image paths or a singular path"
         
