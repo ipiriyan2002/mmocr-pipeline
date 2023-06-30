@@ -19,5 +19,5 @@ Croping and Downloading for recognition task
 Croping and Downloading finished
 ==================================================Preparing Model Configurations==================================================
 Preparing model for textdet
-textdet configuration file can be found in : ../mmocr/configs/textdet/dbnet/dbnet_resnet18_fpnc_40_cordv2.py.py
+textdet configuration file can be found in : ../mmocr/configs/textdet/dbnet/dbnet_resnet18_fpnc_40_cordv2.py
 ==================================================Finished preparing==================================================

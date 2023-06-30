@@ -1,6 +1,6 @@
-from code_gen_lib.code_block import *
-import code_gen_lib.mmocr_config_writers.configs.det_configs as cfg
-from code_gen_lib.mmocr_config_writers.content_block import ContentBlock
+from utils.code_block import *
+import mmocr_config_writers.configs.det_configs as cfg
+from mmocr_config_writers.content_block import ContentBlock
 import os
 
 

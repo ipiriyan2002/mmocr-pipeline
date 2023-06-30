@@ -1,7 +1,7 @@
-from code_gen_lib.mmocr_config_writers.base_config import BaseConfig
-from code_gen_lib.code_block import *
-from code_gen_lib.mmocr_config_writers.textdet_model import TextDetModelConfig
-from code_gen_lib.mmocr_config_writers.textrec_model import TextRecModelConfig
+from mmocr_config_writers.base_config import BaseConfig
+from utils.code_block import *
+from mmocr_config_writers.textdet_model import TextDetModelConfig
+from mmocr_config_writers.textrec_model import TextRecModelConfig
 import os
 
 class ModelConfig(BaseConfig):

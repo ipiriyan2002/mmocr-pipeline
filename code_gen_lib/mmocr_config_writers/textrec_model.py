@@ -1,5 +1,6 @@
 from code_gen_lib.code_block import *
 import code_gen_lib.mmocr_config_writers.configs.recog_configs as cfg
+from code_gen_lib.mmocr_config_writers.content_block import ContentBlock
 import os
 
 
@@ -8,12 +9,13 @@ class TextRecModelConfig:
     DEFAULT_SCHEDULE = None
     DEFAULT_RUNTIME = None
 
-    def __init__(self, dataset, model, base=None, epochs=20,
+    def __init__(self, train_datasets, val_datasets, test_datasets, model, base=None, epochs=20,
                  schedule=None, has_val=False,
-                 train_batch_size=64, test_batch_size=32):
+                 train_batch_size=64, test_batch_size=32, contents=None):
 
         self.checkAndAssign(model, base, epochs)
         self.model = model
+        self.contents = contents
 
         if schedule is None:
             self.schedule = f"../_base_/schedules/{self.DEFAULT_SCHEDULE}"
@@ -23,20 +25,68 @@ class TextRecModelConfig:
 
             self.schedule = f"../_base_/schedules/{self.schedule}"
 
-        self.fname = f"{model}_{epochs}_{dataset}.py"
-        self.base_file = base if not(base is None) else cfg.model_dict[model]["base"][0]
-
-        if os.path.exists(dataset):
-            self.dataset_path = dataset
-            self.dataset = dataset.split("/")[-1]
-        else:
-            self.dataset_path = f"../_base_/datasets/{dataset}"
-            self.dataset = dataset.split(".")[0]
+        self.dataset_name, self.dataset_base_paths, self.datasets = self.gatherDatasets(train_datasets, val_datasets,
+                                                                                        test_datasets)
+        self.fname = f"{model}_{epochs}_{self.dataset_name}.py"
+        self.base_file = base if not (base is None) else cfg.model_dict[model]["base"][0]
 
         self.has_val = has_val
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
         self.epochs = epochs
+
+    def cleanDatasetNames(self, dataset):
+
+        if isinstance(dataset, str):
+            datasets = [dataset]
+        elif dataset is None:
+            return []
+        else:
+            datasets = dataset
+
+        cleaned = []
+
+        for ds in datasets:
+            if os.path.exists(ds):
+                cleaned.append(ds)
+            else:
+                cleaned.append(ds.split(".")[0] + ".py")
+
+        return cleaned
+
+    def gatherDatasets(self, train, val, test):
+        assert isinstance(train,
+                          (str, list)), "Expect training datasets to be either a single dataset or multiple datasets"
+        assert isinstance(val,
+                          (str, list)), "Expect testing datasets to be either a single dataset or multiple datasets"
+        assert isinstance(test,
+                          (str, list)), "Expect testing datasets to be either a single dataset or multiple datasets"
+
+        train = self.cleanDatasetNames(train)
+        val = self.cleanDatasetNames(val)
+        test = self.cleanDatasetNames(test)
+
+        dataset_name = train[0].split("/")[-1].split(".")[0] if len(train) == 1 else "multi"
+
+        all_datasets = []
+        all_datasets.extend(train)
+        all_datasets.extend(val)
+        all_datasets.extend(test)
+
+        dataset_paths = []
+
+        for ds_split in [train, val, test]:
+
+            for ds in ds_split:
+
+                if os.path.exists(ds):
+                    dataset_paths.append(ds)
+                else:
+                    dataset_paths.append(f"../_base_/datasets/{ds}")
+
+        datasets = dict(train=train, val=val, test=test)
+
+        return dataset_name, list(set(dataset_paths)), datasets
 
     def checkAndAssign(self, model, base, epochs):
 
@@ -46,26 +96,80 @@ class TextRecModelConfig:
         self.DEFAULT_SCHEDULE = cfg.DEFAULT_SCHEDULE
         self.DEFAULT_SCHEDULES = cfg.DEFAULT_SCHEDULES
 
-        if not(base is None):
+        if not (base is None):
             assert (base in model_dict["base"]), f"Available bases for {model} :: {model_dict['base']}, but got {base}"
         assert (isinstance(epochs, int)), "Epochs should be integer"
 
+    def getBaseStatement(self, indent):
+        bases = ["_base_ = [",
+                 f"\t'{self.base_file}',"
+                 f"\t'{self.DEFAULT_RUNTIME}',",
+                 f"\t'{self.schedule}',",
+                 ]
+
+        for ds_path in self.dataset_base_paths:
+            bases.append(f"\t'{ds_path}',")
+
+        bases.append("\t]")
+
+        baseStatement = StatementBlock(statements=bases)
+
+        return baseStatement
+
+    def getAssignStatement(self, head, indent):
+
+        lists = []
+        assigns = []
+
+        for split, split_vals in self.datasets.items():
+            pipeline_split = split if split in ["train", "test"] else "test"
+            if len(split_vals) == 1:
+                data_head = split_vals[0].split("/")[-1].split(".")[-2]
+                assigns.extend([f"{head}_{split} = _base_.{data_head}_textrecog_{split}",
+                                f"{head}_{split}.pipeline = _base_.{pipeline_split}_pipeline"])
+            else:
+                list_message = [f"{split}_list = ["]
+                for split_val in split_vals:
+                    data_head = split_vals[0].split("/")[-1].split(".")[-2]
+                    list_message.append(f"\t_base_.{data_head}_textrecog_{split},")
+
+                list_message.append("]")
+                list_message.append("")
+                lists.append(StatementBlock(statements=list_message))
+
+                assign_message = f"{head}_{split} = dict(type='ConcatDataset', datasets={split}_list, pipeline=_base_.{pipeline_split}_pipeline)"
+
+                assigns.extend([assign_message, ""])
+
+        results = []
+        results.extend(lists)
+        results.extend(assigns)
+        assign_statement = StatementBlock(statements=results)
+
+        return assign_statement
+
+    def getPrefixes(self):
+        val_prefixes = []
+        test_prefixes = []
+        for split, split_vals in self.datasets.items():
+            if split == "train":
+                continue
+
+            pref2add = [split_val.split("/")[-1].split(".")[-2] for split_val in split_vals]
+
+            if split == "val":
+                val_prefixes.extend(pref2add)
+            elif split == "test":
+                test_prefixes.extend(pref2add)
+
+        return val_prefixes, test_prefixes
+
     def __str__(self, indent=""):
 
-        baseStatement = StatementBlock(statements=["_base_ = [",
-                                                   f"\t'{self.base_file}',",
-                                                   f"\t'{self.DEFAULT_RUNTIME}',",
-                                                   f"\t'{self.dataset_path}',",
-                                                   f"\t'{self.schedule}',",
-                                                   "\t]"])
+        baseStatement = self.getBaseStatement(indent)
 
-        head = f"{self.dataset}_textrecog"
-        assigns = [f"{head}_train = _base_.{head}_train", f"{head}_train.pipeline = _base_.train_pipeline",
-                   f"{head}_test = _base_.{head}_test", f"{head}_test.pipeline =  _base_.test_pipeline"]
-
-        if self.has_val:
-            assigns.extend([f"{head}_val = _base_.{head}_val", f"{head}_val.pipeline = _base_.test_pipeline"])
-        assignStatements = StatementBlock(statements=assigns)
+        head = f"{self.dataset_name}_textrecog"
+        assignStatements = self.getAssignStatement(head, indent)
 
         dataloaderStatements = []
 
@@ -82,15 +186,20 @@ class TextRecModelConfig:
                            f"\tdataset={head}_{split})"]
 
                 if split in ["val", "test"]:
-                    assigns.insert(4,"\tdrop_last=False,")
+                    assigns.insert(4, "\tdrop_last=False,")
             else:
                 assigns = ["val_dataloader = test_dataloader"]
 
             dataloaderStatements.append(StatementBlock(statements=assigns))
             dataloaderStatements.append("")
 
-        evaluatorStatement = StatementBlock(statements=[f"val_evaluator = dict(dataset_prefixes=['{self.dataset}'])","test_evaluator = val_evaluator", ""])
-        autoscaleStatement = StatementBlock(statements=[f"auto_scale_lr = dict(base_batch_size={self.train_batch_size} * 4)"])
+        val_prefixes, test_prefixes = self.getPrefixes()
+
+        evaluatorStatement = StatementBlock(
+            statements=[f"val_evaluator = dict(dataset_prefixes={val_prefixes})", f"test_evaluator = dict(dataset_prefixes={test_prefixes})",
+                        ""])
+        autoscaleStatement = StatementBlock(
+            statements=[f"auto_scale_lr = dict(base_batch_size={self.train_batch_size} * 4)"])
 
         finals = [baseStatement, "",
                   assignStatements, "",
@@ -98,8 +207,10 @@ class TextRecModelConfig:
         finals.extend(dataloaderStatements)
         finals.append(evaluatorStatement)
         finals.append(autoscaleStatement)
-        finals.append("")
-        finals.append(f"train_cfg = dict(type='EpochBasedTrainLoop', max_epochs={self.epochs}, val_interval=20)")
+
+        if not (self.contents is None):
+            contentStatement = ContentBlock(**self.contents)
+            finals.append(contentStatement.getStatement(indent))
 
         finalStatement = StatementBlock(statements=finals)
 
