@@ -75,10 +75,18 @@ def main():
     print(f"{'=' * 50}Preparing Model Configurations{'=' * 50}")
 
     if not(args.no_det_model):
-        processModel(det_model_dict, "textdet")
+        if isinstance(det_model_dict, dict):
+            det_model_dict = [det_model_dict]
+
+        for det_model in det_model_dict:
+            processModel(det_model, "textdet")
 
     if not(args.no_recog_model):
-        processModel(recog_model_dict, "textrecog")
+        if isinstance(recog_model_dict, dict):
+            recog_model_dict = [recog_model_dict]
+
+        for recog_model in recog_model_dict:
+            processModel(recog_model, "textrecog")
 
     print(f"{'=' * 50}Finished preparing{'=' * 50}")
 
