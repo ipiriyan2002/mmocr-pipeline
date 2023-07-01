@@ -30,12 +30,12 @@ Preferred Python version 3.8, limit 3.10
 
 ### Install Dependencies
 
-Install Pytorch (CUDA: 11.7 is preferred) following Link (https://pytorch.org/get-started/locally/)
+#### Install Pytorch (CUDA: 11.7 is preferred) following Link (https://pytorch.org/get-started/locally/)
 ```commandline
 >>> conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 ```
 
-Setup MMOCR
+#### Setup MMOCR
 ```commandline
 >>> pip install -U openmim
 >>> mim install mmengine
@@ -47,7 +47,14 @@ Setup MMOCR
 >> pip install -v -e .
 ```
 
-Others (Make sure to check if the following has already been installed alongside the former)
+#### Setup Pipeline
+
+Recommend cloning under mmocr directory or in the same directory as mmocr for ease use (little navigation)
+```commandline
+>>> git clone https://github.com/ipiriyan2002/mmocr-pipeline.git
+```
+
+#### Others (Make sure to check if the following has already been installed alongside the former)
 ```commandline
 >>> conda install pillow
 >>> conda install pandas
@@ -204,18 +211,115 @@ recog_model_dict = dict(
 ```
 
 ### Running prepare
-
+```commandline
+>>> cd mmocr-pipeline
+```
 Once above configuration file is defined run the following code with following optional flags
 - '-nd' or '--no-dataset' -> Do not process defined datasets
 - '-ndm' or '--no-det-model' -> Do not process defined detection model
 - '-nrm' or '--no-recog-model' -> Do not process defined recognition model
 
 ```commandline
->>> python prepare.py <<config_name>>.py
+>>> python prepare.py <<config_path>>
 ```
 
 Example, if custom config file is named prepare_config_2.py
 ```commandline
->>> python prepare.py prepare_config_2.py
+>>> python prepare.py ./prepare_config_2.py
 ```
+
+### Training, Testing and Infering under MMOCR
+
+Make sure you are in the mmocr directory and not mmocr-pipeline directory
+
+If in mmocr-pipeline directory:
+```commandline
+>>> cd <<MMOCR directory>>
+```
+
+#### Training
+
+The following commands are taken from https://mmocr.readthedocs.io/en/dev-1.x/user_guides/train_test.html
+```commandline
+# Train the specified MMOCR model by calling tools/train.py
+>>> CUDA_VISIBLE_DEVICES= python tools/train.py ${CONFIG_FILE} [PY_ARGS]
+
+# Training
+# Example 1: Training DBNet with CPU
+>>> CUDA_VISIBLE_DEVICES=-1 python tools/train.py configs/textdet/dbnet/dbnet_resnet50-dcnv2_fpnc_1200e_icdar2015.py
+
+# Example 2: Specify to train DBNet with gpu:0, specify the working directory as dbnet/, and turn on mixed precision (amp) training
+>>> CUDA_VISIBLE_DEVICES=0 python tools/train.py configs/textdet/dbnet/dbnet_resnet50-dcnv2_fpnc_1200e_icdar2015.py --work-dir dbnet/ --amp
+```
+
+The generated configuration path is outputted from prepare.py. By default, it will be under the following directories:
+- configs/textdet/<<model_name>>/<<config_file>>
+- configs/textrecog/<<model_name>>/<<config_file>>
+
+where the config file is named after model, backbone, neck and epochs for detection
+and model, epochs for recognition.
+
+Names of generated files are given as output from prepare.py/
+
+
+#### Testing
+
+The following commands are taken from https://mmocr.readthedocs.io/en/dev-1.x/user_guides/train_test.html
+
+```commandline
+# Test a pretrained MMOCR model by calling tools/test.py
+>>> CUDA_VISIBLE_DEVICES= python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [PY_ARGS]
+
+# Test
+# Example 1: Testing DBNet with CPU
+>>> CUDA_VISIBLE_DEVICES=-1 python tools/test.py configs/textdet/dbnet/dbnet_resnet50-dcnv2_fpnc_1200e_icdar2015.py dbnet_r50.pth
+
+# Example 2: Testing DBNet on gpu:0
+>>> CUDA_VISIBLE_DEVICES=0 python tools/test.py configs/textdet/dbnet/dbnet_resnet50-dcnv2_fpnc_1200e_icdar2015.py dbnet_r50.pth
+```
+
+Checkpoint file can be found under work_dirs in mmocr directory, for each specific trained config file
+
+
+#### Multiple GPUS
+
+The following commands are taken from https://mmocr.readthedocs.io/en/dev-1.x/user_guides/train_test.html
+
+
+```commandline
+# Training
+>>> NNODES=${NNODES} NODE_RANK=${NODE_RANK} PORT=${MASTER_PORT} MASTER_ADDR=${MASTER_ADDR} ./tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM} [PY_ARGS]
+
+# Testing
+>>> NNODES=${NNODES} NODE_RANK=${NODE_RANK} PORT=${MASTER_PORT} MASTER_ADDR=${MASTER_ADDR} ./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [PY_ARGS]
+```
+
+
+#### Infering
+
+More can be found here: https://mmocr.readthedocs.io/en/dev-1.x/user_guides/inference.html
+
+--show flag does not work in servers without GUI or when using SSH tunnel. 
+
+```commandline
+>>> python tools/infer.py <<Image path / Image Directory path>>\
+--det <<Model name / config file under work_dirs>> or None\ 
+--det-weights <<trained weights under work_dirs>> or None\
+ --rec <<Model name / config file under work_dirs>> or None\
+  --rec-weights <<trained weights under work_dirs>> or None\
+   --show
+```
+
+If that is the case:
+
+```commandline
+>>> python tools/infer.py <<Image path / Image Directory path>>\
+ --det <<Model name / config file under work_dirs>>\
+  --rec <<Model name / config file under work_dirs>>\
+   --out-dir <<Directory to store results>>\
+   --save-vis --save-pred
+```
+
+--save-vis : saves the visualization of inference results
+--save-pred : saves the raw inference results
 
