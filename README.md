@@ -40,7 +40,7 @@ Preferred Python version 3.8, limit 3.10
 >>> pip install -U openmim
 >>> mim install mmengine
 >>> mim install ‘mmcv>=2.0.rc1’
->>> mim install ‘mmdet>=3.0.0rc0’ 
+>>> mim install ‘mmdet==3.0.0rc5’ 
 >>> git clone https://github.com/open-mmlab/mmocr.git 
 >>> cd mmocr 
 >>> pip install -r requirements.txt 
