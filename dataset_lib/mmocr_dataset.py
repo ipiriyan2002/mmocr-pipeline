@@ -68,7 +68,7 @@ class MMOCRDataset(ABC):
             json.dump(final_dict, f)
 
         print(f"JSON file for MMOCR task {task} can be found in: {save_path}")
-        return save_path
+        return fname
 
     def getAbstractInstance(self, img_dict):
 
@@ -129,6 +129,8 @@ class MMOCRDataset(ABC):
         for index, ann_dict in enumerate(anns):
             img_name = img_name.split(".")[0]
             save_img_name = os.path.join(save_dir, f"{img_name}_{index}.jpg")
+            if ann_dict['ignore']:
+                save_img_name = os.path.join(save_dir, f"{img_name}_{index}_ERROR.jpg")
 
             try:
                 open_img.crop(ann_dict["bbox"]).save(save_img_name)
@@ -136,12 +138,14 @@ class MMOCRDataset(ABC):
                 continue
 
             img_path = '/'.join(save_img_name.split("/")[-4:])
-            out_dict = dict(
-                img_path=img_path,
-                instances=[dict(text=ann_dict["text"])]
-            )
+            
+            if not(ann_dict['ignore']):
+                out_dict = dict(
+                    img_path=img_path,
+                    instances=[dict(text=ann_dict["text"])]
+                )
 
-            all_crops.append(out_dict)
+                all_crops.append(out_dict)
 
         return all_crops
 

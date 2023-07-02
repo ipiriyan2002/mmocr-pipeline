@@ -56,7 +56,7 @@ class TextDetModelConfig:
 
     def gatherDatasets(self, train, val, test):
         assert isinstance(train, (str, list)), "Expect training datasets to be either a single dataset or multiple datasets"
-        assert isinstance(val, (str, list, type(None))), "Expect testing datasets to be either a single dataset or multiple datasets or None"
+        assert isinstance(val, (str, list, type(None))), "Expect validation datasets to be either a single dataset or multiple datasets or None"
         assert isinstance(test, (str, list, type(None))), "Expect testing datasets to be either a single dataset or multiple datasets or None"
 
         train = self.cleanDatasetNames(train)
@@ -103,16 +103,16 @@ class TextDetModelConfig:
         assert (isinstance(epochs, int)), "Epochs should be integer"
 
     def getBaseStatement(self, indent):
-        bases = ["_base_ = [",
-                 f"\t'{self.base_file}',"
-                 f"\t'{self.DEFAULT_RUNTIME}',",
-                 f"\t'{self.schedule}',",
+        bases = [indent + "_base_ = [",
+                 indent + f"\t'{self.base_file}',",
+                 indent + f"\t'{self.DEFAULT_RUNTIME}',",
+                 indent + f"\t'{self.schedule}',",
                  ]
 
         for ds_path in self.dataset_base_paths:
-            bases.append(f"\t'{ds_path}',")
+            bases.append(indent + f"\t'{ds_path}',")
 
-        bases.append("\t]")
+        bases.append(indent + "]")
 
         baseStatement = StatementBlock(statements=bases)
 
@@ -126,22 +126,25 @@ class TextDetModelConfig:
 
         for split, split_vals in self.datasets.items():
             pipeline_split = split if split in ["train", "test"] else "test"
-            if len(split_vals) == 1:
+            if split_vals == None:
+                pass
+            elif len(split_vals) == 1:
                 data_head = split_vals[0].split("/")[-1].split(".")[-2]
-                assigns.extend([f"{head}_{split} = _base_.{data_head}_textdet_{split}", f"{head}_{split}.pipeline = _base_.{pipeline_split}_pipeline"])
+                assigns.extend([indent + f"{head}_{split} = _base_.{data_head}_textdet_{split}",
+                                indent + f"{head}_{split}.pipeline = _base_.{pipeline_split}_pipeline"])
             else:
-                list_message = [f"{split}_list = ["]
+                list_message = [indent + f"{split}_list = ["]
                 for split_val in split_vals:
-                    data_head = split_vals[0].split("/")[-1].split(".")[-2]
-                    list_message.append(f"\t_base_.{data_head}_textdet_{split},")
+                    data_head = split_val.split("/")[-1].split(".")[-2]
+                    list_message.append(indent + f"\t_base_.{data_head}_textdet_{split},")
 
-                list_message.append("]")
+                list_message.append(indent + "]")
                 list_message.append("")
                 lists.append(StatementBlock(statements=list_message))
 
-                assign_message = f"{head}_{split} = dict(type='ConcatDataset', datasets={split}_list, pipeline=_base_.{pipeline_split}_pipeline)"
+                assign_message = indent + f"{head}_{split} = dict(type='ConcatDataset', datasets={split}_list, pipeline=_base_.{pipeline_split}_pipeline)"
 
-                assigns.extend([assign_message,""])
+                assigns.extend([assign_message, ""])
 
         results = []
         results.extend(lists)
@@ -154,7 +157,7 @@ class TextDetModelConfig:
 
         baseStatement = self.getBaseStatement(indent)
 
-        head = f"{self.dataset_name}_textdet"
+        head = f"{self.dataset_name}_textrecog"
         assignStatements = self.getAssignStatement(head, indent)
 
         dataloaderStatements = []
@@ -164,12 +167,12 @@ class TextDetModelConfig:
                 isTrain = split == "train"
                 batch_size = self.train_batch_size if isTrain else self.test_batch_size
                 nw = 8 if isTrain else 4
-                assigns = [f"{split}_dataloader = dict(",
-                           f"\tbatch_size={batch_size},"
-                           f"\tnum_workers={nw},",
-                           f"\tpersistent_workers=True,",
-                           f"\tsampler=dict(type='DefaultSampler', shuffle={isTrain}),",
-                           f"\tdataset={head}_{split})"]
+                assigns = [indent + f"{split}_dataloader = dict(",
+                           indent + f"\tbatch_size={batch_size},",
+                           indent + f"\tnum_workers={nw},",
+                           indent + f"\tpersistent_workers=True,",
+                           indent + f"\tsampler=dict(type='DefaultSampler', shuffle={isTrain}),",
+                           indent + f"\tdataset={head}_{split})"]
             else:
                 assigns = ["val_dataloader = test_dataloader"]
 

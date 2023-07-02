@@ -48,11 +48,16 @@ def processDatset(dataset_dict):
             print(f"{'=' * 60}")
         else:
             print(f"Skipping {split} preparation")
-
+    
+    if dataset.save_dir.split("/")[0] == ".":
+        config_save_dir = os.path.join(os.getcwd(), *dataset.save_dir.split("/")[1:])
+    else:
+        config_save_dir = dataset.save_dir
+    
     for task in fnames.keys():
         config_writer = DatasetConfig(dataset.name, task, dataset_dict["config_save_dir"])
-
-        config_writer(dataset.save_dir, fnames, splits)
+        
+        config_writer(config_save_dir, fnames[task], splits)
 
 def processModel(task_dict, task):
 

@@ -2,8 +2,8 @@ dataset_dict = dict(
     type="glosat",
     config_save_dir=None,
     init_params= dict(name="glosat", tasks = ["det", "recog"], save_dir=None, generator=None),
-    prepare_params=dict(train=dict(img_paths=[], ann_paths=[], split="train"),
-                        test=dict(img_paths=[], ann_paths=[], split="test"),
+    prepare_params=dict(train=dict(img_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/Image/"], ann_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/annotation_info/Batch1/"], split="train"),
+                        test=dict(img_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/Image/"], ann_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/annotation_info/Batch2/"], split="test"),
                         val=None)
 )
 
@@ -18,7 +18,7 @@ det_model_dict = dict(
     base=None,
     epochs=40,
     schedule=None,
-    has_val=True,
+    has_val=False,
     train_batch_size=16,
     test_batch_size=1,
     contents = dict(
@@ -48,7 +48,7 @@ recog_model_dict = dict(
     base="_base_abinet-vision.py",
     epochs=10,
     schedule=None,
-    has_val=True,
+    has_val=False,
     train_batch_size=64,
     test_batch_size=32,
     contents = dict(
