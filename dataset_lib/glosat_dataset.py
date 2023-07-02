@@ -35,7 +35,7 @@ class GlosatDataset(MMOCRDataset):
         box = coco2voc([x,y,w,h])
 
         #By default, ignore any angles that is not 0
-        ignore = (text == "") or (text == " ") or (text == "-") or (len(list(set(text))) == 1 and "@" in text)
+        ignore = (text == "") or (text == " ") or (text == "-") or (text in ["@@@", "$$$", "###"])
 
         #Update the key value pairs
         output = dict(text=text, bbox=box, ignore=ignore)
