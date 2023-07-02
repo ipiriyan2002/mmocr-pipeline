@@ -3,19 +3,20 @@ import json
 from PIL import Image
 import pandas as pd
 from dataset_lib.mmocr_dataset import MMOCRDataset
-from util.box_translator_utils import *
+from utils.box_translator_utils import *
+
 
 class IngDataset(MMOCRDataset):
 
     def __init__(self, name, tasks, save_dir=None, generator=None):
         super().__init__(name, tasks, save_dir, generator)
 
-
     """
     Perform basic text abstraction such as removing line delimiters and non-training characters (for now: _@_)
     """
+
     def abstractText(self, text):
-        #text = text.replace("\n", " ")
+        # text = text.replace("\n", " ")
         text = text.replace("_@_", "")
 
         return text.strip()
@@ -24,16 +25,17 @@ class IngDataset(MMOCRDataset):
     Read a single instance of an image given the format of the Ingredient lists,
     Return an abstract version for MMOCR
     """
+
     def abstractDataDict(self, ann_dict):
-        #Abstract format of text (By doing some basic preprocessing)
+        # Abstract format of text (By doing some basic preprocessing)
         text = self.abstractText(ann_dict["metadata"]['shapeTranscription']['text'])
-        #Get bounding box and polygon
+        # Get bounding box and polygon
         box = coco2voc(ann_dict['coordinates'])
 
-        #By default, ignore any angles that is not 0
+        # By default, ignore any angles that is not 0
         ignore = ann_dict['angle'] != 0
 
-        #Update the key value pairs
+        # Update the key value pairs
         output = dict(text=text, bbox=box, ignore=ignore)
 
         return output
@@ -42,10 +44,21 @@ class IngDataset(MMOCRDataset):
 
         ann_paths = ann_paths if isinstance(ann_paths, list) else [ann_paths]
 
-        dataset_list = [pd.read_csv(ann) for ann in ann_paths]
+        filtered_paths = []
+
+        for ann in ann_paths:
+            if os.path.isdir(ann):
+                for file in os.listdir(ann):
+
+                    if ".csv" in file:
+                        filtered_paths.append(os.path.join(ann, file))
+            else:
+                filtered_paths.append(ann)
+
+        dataset_list = [pd.read_csv(ann) for ann in filtered_paths]
         dataset = pd.concat(dataset_list, ignore_index=True)
 
-        return dataset[["annotation","filename"]]
+        return dataset[["annotation", "filename"]]
 
     def getImagePath(self, img_paths, image_name):
 
@@ -65,12 +78,12 @@ class IngDataset(MMOCRDataset):
         Prepares a data_dict for further json creation
         """
 
-        #Get the data
+        # Get the data
 
         global abs_inst
-        assert not(img_paths is None), "Provide atleast one image path"
+        assert not (img_paths is None), "Provide atleast one image path"
         assert (isinstance(img_paths, (str, list))), "Expected a string or a,list of strings for image paths"
-        assert not(ann_paths is None), "Provide atleast one annotation path"
+        assert not (ann_paths is None), "Provide atleast one annotation path"
         assert (isinstance(ann_paths, (str, list))), "Expected a string or a,list of strings for annotation paths"
 
         data = self.loadAnns(ann_paths)
@@ -100,14 +113,14 @@ class IngDataset(MMOCRDataset):
 
             instances = []
             if len(crop_texts) > 0:
-                crop_boxes = crop_boxes if not(crop_boxes == []) else None
+                crop_boxes = crop_boxes if not (crop_boxes == []) else None
                 out = self.generator(image_path, crop_texts, crop_boxes)
 
-                instances.extend([dict(text=v['original'], bbox=v['box'], ignore=v['ignore']) for k,v in out.items() if not(v['box'] == [])])
+                instances.extend([dict(text=v['original'], bbox=v['box'], ignore=v['ignore']) for k, v in out.items() if
+                                  not (v['box'] == [])])
 
             instances.extend(not_added)
-            
+
             data_dict[fname] = dict(img=image_path, instances=instances)
 
         return data_dict
-

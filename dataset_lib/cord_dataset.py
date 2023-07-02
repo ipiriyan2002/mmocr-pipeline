@@ -33,7 +33,19 @@ class CordDataset(MMOCRDataset):
             paths.extend(self.paths2Append(img_paths))
             paths.extend(self.paths2Append(ann_paths))
 
-            filtered_paths = [path for path in paths if path.split(".")[-1] == "parquet"]
+            filtered_paths = []
+
+            for path in paths:
+                if os.path.isdir(path):
+                    for file in os.listdir(path):
+                        if ".parquet" in file:
+                            filtered_paths.append(os.path.join(path, file))
+
+                elif os.path.exist(path) and (".parquet") in path:
+                        filtered_paths.append(path)
+                else:
+                    pass
+
 
             if len(filtered_paths) > 0:
                 dataset = self.loadParqFiles(filtered_paths)

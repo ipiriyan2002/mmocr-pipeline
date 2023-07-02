@@ -26,11 +26,11 @@ class ContentBlock:
         hook_stats = [indent+f"default_hooks = dict(\n"]
 
         if not(self.log_interval is None):
-            hook_stats.append(f"\tlogger=dict(type='LoggerHook', interval={self.log_interval}),")
+            hook_stats.append(indent+f"\tlogger=dict(type='LoggerHook', interval={self.log_interval}),")
 
         if not(self.checkpoint_interval is None):
-            hook_stats.append(f"\tcheckpoint=dict(type='CheckpointHook', interval={self.checkpoint_interval}),")
-        hook_stats.append(")")
+            hook_stats.append(indent+f"\tcheckpoint=dict(type='CheckpointHook', interval={self.checkpoint_interval}),")
+        hook_stats.append(indent+")")
 
         if len(hook_stats) == 2:
             hook_stats = []
@@ -44,7 +44,7 @@ class ContentBlock:
         
         kvals = self.optimzer_params.items()
 
-        optimizer_statements = "dict("
+        optimizer_statements = indent+"dict("
 
         for key, value in kvals:
 
@@ -61,9 +61,9 @@ class ContentBlock:
 
         optimizerStatBlock = StatementBlock(statements=[
             indent+"optim_wrapper = dict(",
-            "\ttype='OptimWrapper',",
-            f"\toptimizer={optimizer_statements}",
-            ")"
+            indent+"\ttype='OptimWrapper',",
+            indent+f"\toptimizer={optimizer_statements}",
+            indent+")"
         ])
 
         return optimizerStatBlock
@@ -83,24 +83,24 @@ class ContentBlock:
             if param_schedule is None:
                 continue
 
-            temp_message = "dict("
+            temp_message = indent+"dict("
 
             for key, value in param_schedule.items():
 
-                temp = f"{key}={value}"
+                temp = f"{key}={value},"
 
                 if isinstance(value, (bool, type(None))):
                     pass
                 elif isinstance(value, str):
-                    temp = f"{key}='{value}'"
+                    temp = f"{key}='{value}',"
 
                 temp_message += temp
 
             temp_message += ")"
 
-            results.append("\t"+temp_message+",")
+            results.append(indent+"\t"+temp_message+",")
 
-        results.append("]")
+        results.append(indent+"]")
 
         schedulerBlock = StatementBlock(statements=results)
 
@@ -111,12 +111,12 @@ class ContentBlock:
         result = "dict("
 
         for key, value in dict_.items():
-            temp = f"{key}={value}"
+            temp = f"{key}={value},"
 
             if isinstance(value, (bool, type(None))):
                 pass
             elif isinstance(value, str):
-                temp = f"{key}='{value}'"
+                temp = f"{key}='{value}',"
 
             result += temp
 

@@ -62,8 +62,8 @@ Recommend cloning under mmocr directory or in the same directory as mmocr for ea
 >>> conda install -c conda-forge datasets 
 >>> pip install levenshtein
 >>> pip install pyarrow
->>> conda install json
->>> conda install argparse
+>>> conda install -c jmcmurray json
+>>> conda install -c conda-forge argparse
 ```
 
 ## Pipeline
@@ -92,6 +92,7 @@ Each dataset would be defined using the following setting
 dataset_dict = [
     dict(
         type="cordv2",   #Available types include "cordv2", "ing", "meme", "glosat"
+        config_save_dir=None, #Directory at which MMOCR dataset config are created, keep at None unless needed
         init_params= dict(name="cordv2", tasks = ["det"], save_dir=None, generator=None),
         prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train"),
                             test=dict(img_paths=None, ann_paths=None, split="test"),
@@ -114,6 +115,12 @@ Currently we support the following datasets:
 
 Supports tasks: "det" and "recog"
 
+#### prepare params
+
+The img_paths and ann_paths accept a single (folder/file) path or a list of (folder/file) paths.
+
+When defining custom datasets do remember to support functionality for reading files given a folder
+
 ### Defining a custom generator under init_params:
 
 Define the detection, recognition, custom weights, device and save directory for 
@@ -135,6 +142,8 @@ generator = dict(
 
 For models, we support detection and recognition configuration, where the definition for both are similar.
 Like dataset_dict, you can also provide a list of dicts or a single one if needed
+
+For the following two dicts, it is important to state has_val if providing validation file and to state False for has_val if not.
 
 ### Det Model Dict
 

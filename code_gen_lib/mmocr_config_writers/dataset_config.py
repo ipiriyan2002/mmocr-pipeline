@@ -1,12 +1,14 @@
 from code_gen_lib.mmocr_config_writers.base_config import BaseConfig
 from code_gen_lib.code_block import *
+import os
 
 class DatasetConfig(BaseConfig):
 
     def __init__(self, dataset, task, save_path=None):
+        self.dataset = dataset
         self.DEFAULT_PATH = os.path.join("configs", f"{task}", "_base_", "datasets")
-        self.head = f"{self.dataset}_{self.task}"
-        super().__init__(dataset, task, save_path)
+        self.head = f"{self.dataset}_{task}"
+        super().__init__(task, save_path)
 
 
     def generateSplitBlock(self,fname,split):

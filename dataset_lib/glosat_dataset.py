@@ -54,6 +54,7 @@ class GlosatDataset(MMOCRDataset):
     def correctAnns(self, dataset, correct_anns):
 
         dataset_list = [pd.read_csv(ann) for ann in correct_anns]
+
         correct_dataset = pd.concat(dataset_list, ignore_index=True)
 
         updated = pd.concat([dataset, correct_dataset]).drop_duplicates(['image_name']).sort_values('image_name')
@@ -104,11 +105,23 @@ class GlosatDataset(MMOCRDataset):
         ann_paths = ann_paths if isinstance(ann_paths, list) else [ann_paths]
         def_anns = []
         correct_anns = []
+
         for ann in ann_paths:
-            if not("correct" in ann):
-                def_anns.append(ann)
+            if os.path.isdir(ann):
+                for file in os.listdir(ann):
+
+                    if ".csv" in file:
+
+                        if "correct" in file:
+                            correct_anns.append(os.path.join(ann, file))
+                        else:
+                            def_anns.append(os.path.join(ann, file))
             else:
-                correct_anns.append(ann)
+                if "correct" in ann:
+                    correct_anns.append(ann)
+                else:
+                    def_anns.append(ann)
+
 
         data = self.loadAnns(def_anns)
 

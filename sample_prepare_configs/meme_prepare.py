@@ -1,6 +1,7 @@
 dataset_dict = dict(
     type="meme",
-    init_params= dict(name="meme", tasks = ["det"], save_dir="./data/", generator=None),
+    config_save_dir=None,
+    init_params= dict(name="meme", tasks = ["det", "recog"], save_dir=None, generator=None),
     prepare_params=dict(train=dict(img_paths=[], ann_paths=[], split="train"),
                         test=dict(img_paths=[], ann_paths=[], split="test"),
                         val=None)
@@ -65,3 +66,4 @@ recog_model_dict = dict(
             test_cfg=None
         ),
     )
+)
