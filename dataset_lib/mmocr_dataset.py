@@ -61,10 +61,14 @@ class MMOCRDataset(ABC):
 
     def saveJson(self, final_dict, split, task):
 
-        save_path = os.path.join(self.save_dir, f"text{task}_{split}.json")
+        fname = f"text{task}_{split}.json"
+        save_path = os.path.join(self.save_dir, fname)
 
         with open(save_path, "w") as f:
             json.dump(final_dict, f)
+
+        print(f"JSON file for MMOCR task {task} can be found in: {save_path}")
+        return save_path
 
     def getAbstractInstance(self, img_dict):
 
@@ -112,7 +116,9 @@ class MMOCRDataset(ABC):
 
         # final dict for detection task
         final_dict = dict(metainfo=meta_info_default, data_list=data_list)
-        self.saveJson(final_dict, split, "det")
+        fname = self.saveJson(final_dict, split, "det")
+
+        return fname
 
     def retreiveCropsDict(self, img_name, img_path, anns, save_dir):
 
@@ -130,7 +136,10 @@ class MMOCRDataset(ABC):
                 continue
 
             img_path = '/'.join(save_img_name.split("/")[-4:])
-            out_dict = dict(img_path=img_path, instances=list(dict(text=ann_dict["text"])))
+            out_dict = dict(
+                img_path=img_path,
+                instances=[dict(text=ann_dict["text"])]
+            )
 
             all_crops.append(out_dict)
 
@@ -164,7 +173,9 @@ class MMOCRDataset(ABC):
         print("Croping and Downloading finished")
         # final dict for detection task
         final_dict = dict(metainfo=meta_info_default, data_list=data_list)
-        self.saveJson(final_dict, split, "recog")
+        fname = self.saveJson(final_dict, split, "recog")
+
+        return fname
 
     def __call__(self, data_dict, split):
         """
@@ -178,14 +189,19 @@ class MMOCRDataset(ABC):
         :param split: split name
         :return:
         """
+        fnames = dict(det=[], recog=[])
 
         if self.isDet:
             print("Preparing JSON file for detection task")
-            self.createDetJsonFile(data_dict, split)
+            out = self.createDetJsonFile(data_dict, split)
+            fnames["det"].append(out)
 
         if self.isRecog:
             print("Preparing JSON file for recognition task")
-            self.createRecogJsonFile(data_dict, split)
+            out = self.createRecogJsonFile(data_dict, split)
+            fnames['recog'].append(out)
+
+        return fnames
 
     @abstractmethod
     def process(self, img_paths, ann_paths, split):

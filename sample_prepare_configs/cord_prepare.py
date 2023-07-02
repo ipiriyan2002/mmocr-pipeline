@@ -1,5 +1,6 @@
 dataset_dict = dict(
     type="cordv2",
+    config_save_dir=None,
     init_params= dict(name="cordv2", tasks = ["det", "recog"], save_dir=None, generator=None),
     prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train"),
                         test=dict(img_paths=None, ann_paths=None, split="test"),
@@ -65,3 +66,4 @@ recog_model_dict = dict(
             test_cfg=None
         ),
     )
+)

@@ -6,7 +6,8 @@ Currently Ing Dataset is Not working properly
 
 dataset_dict = dict(
     type="ing",
-    init_params= dict(name="ing", tasks = ["det"], save_dir="./data/", generator=None),
+    config_save_dir=None,
+    init_params= dict(name="ing", tasks = ["det", "recog"], save_dir=None, generator=None),
     prepare_params=dict(train=dict(img_paths=[], ann_paths=[], split="train"),
                         test=dict(img_paths=[], ann_paths=[], split="test"),
                         val=None)

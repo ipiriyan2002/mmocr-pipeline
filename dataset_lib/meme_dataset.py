@@ -57,7 +57,18 @@ class MemeDataset(MMOCRDataset):
 
         datadict = {}
 
-        for ann_path in ann_paths:
+        filtered_ann_paths = []
+
+        for ann in ann_paths:
+            if os.path.isdir(ann):
+                for file in os.listdir(ann):
+
+                    if ".jsonl" in file:
+                        filtered_ann_paths.append(os.path.join(ann, file))
+            else:
+                filtered_ann_paths.append(ann)
+
+        for ann_path in filtered_ann_paths:
             datadict.update(self.readPath(ann_path, img_paths, split))
 
         return datadict
