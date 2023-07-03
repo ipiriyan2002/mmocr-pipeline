@@ -39,6 +39,8 @@ def removeBelowAverageHeight(preds, thresh_pad=20, min_height=5, min_width=2):
     return new_preds
 
 
+
+
 #===================================================================
 #Main
 #===================================================================
@@ -257,3 +259,56 @@ def generateUnknownBoxes(paired_pred, img_meta):
             out['box'] = genBox
             out['ignore'] = True
     return paired_pred
+
+#===================================================================
+#Order Sentence
+#===================================================================
+
+def order_sent(pred_boxes):
+    values = list(pred_boxes.values())
+
+    #Get seperate sentences
+    sent_dict = {}
+    for v in values:
+        if v['sent_order'] in sent_dict.keys():
+            sent_dict[v['sent_order']].append(v)
+        else:
+            sent_dict[v['sent_order']] = []
+            sent_dict[v['sent_order']].append(v)
+
+    #group sentences
+
+    out_dict = {}
+
+    for index, (sent, sent_vals) in enumerate(sent_dict.items()):
+        try:
+            boxes = [sent_val['box'] for sent_val in sent_vals if len(sent_val['box']) == 4]
+            boxes = np.array(boxes)
+            #Calculate the center points for all boxes
+            box_cen = np.array([calcCenterPoint(box) for box in boxes])
+            print(box_cen)
+            #Get the order for the box centers
+            ord_ = box_cen[...,0].argsort()
+            #Order the boxes and the box centers
+            print(sent_vals)
+            sent_vals = list(np.array(sent_vals)[ord_])
+
+            x_min = sent_vals[0]['box'][0]
+            y_min = min([box[1] for box in boxes])
+            x_max = sent_vals[-1]['box'][2]
+            y_max = max([box[3] for box in boxes])
+
+            joined_box = [x_min,y_min, x_max, y_max]
+
+            joined_sent_original = [sent_val['original'] for sent_val in sent_vals if not(sent_val['ignore'])]
+            joined_sent_original = " ".join(joined_sent_original)
+            joined_sent_pred =  [sent_val['prediction'] for sent_val in sent_vals]
+            joined_sent_pred = " ".join(joined_sent_pred)
+
+            ignore = all([sent_val['ignore'] for sent_val in sent_vals])
+
+            out_dict[index] = dict(original=joined_sent_original, prediction=joined_sent_pred, box=joined_box, ignore=ignore, sent_order=sent)
+        except:
+            continue
+
+    return out_dict

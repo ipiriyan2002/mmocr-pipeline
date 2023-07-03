@@ -1,12 +1,16 @@
 #Box Translators
 
 #To PASCAL VOC format [xmin, ymin, xmax, ymax]
-
 def quad2voc(box):
 
-    x1,y1,_,_,x3,y3,_,_ = box
+    x1,y1,x2,y2,x3,y3,x4,y4 = box
 
-    return [x1,y1,x3,y3]
+    x_min = min([x1,x2,x3,x4])
+    y_min = min([y1,y2,y3,y4])
+    x_max = max([x1,x2,x3,x4])
+    y_max = max([y1,y2,y3,y4])
+
+    return [x_min,y_min,x_max,y_max]
 
 def coco2voc(box):
 
@@ -64,7 +68,7 @@ def voc2coco(box):
 
 def quad2coco(box):
 
-    x1,y1,_,_,x3,y3,_,_ = box
+    x1,y1,x3,y3 = quad2voc(box)
 
     w = (x3 - x1) + 1
     h = (y3 - y1) + 1
@@ -96,7 +100,7 @@ def voc2yolo(box):
 
 def quad2yolo(box):
 
-    x1,y1,_,_,x3,y3,_,_ = box
+    x1,y1,x3,y3 = quad2voc(box)
 
     w = (x3 - x1) + 1
     h = (y3 - y1) + 1

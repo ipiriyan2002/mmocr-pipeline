@@ -80,7 +80,7 @@ class MMOCRBoxGenerator:
                 openedImg = Image.open(image)
             except:
                 raise FileNotFoundError(f"{image} does not exist")
-        if isinstance(image, object):
+        elif isinstance(image, object):
             image = np.array(image)
 
         #Get the text order

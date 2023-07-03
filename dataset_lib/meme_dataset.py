@@ -3,6 +3,8 @@ import json
 from PIL import Image
 import pandas as pd
 from dataset_lib.mmocr_dataset import MMOCRDataset
+from bbox_gen.utils.box_processing import order_sent
+
 
 class MemeDataset(MMOCRDataset):
 
@@ -30,11 +32,7 @@ class MemeDataset(MMOCRDataset):
                 classes = line['label'] if split in ["train", "dev"] else -1
 
                 try:
-                    pred_box = self.generator(valid_path, text)
-
-                    instances = [
-                        dict(text=v["original"], bbox=v["box"], ignore=v["ignore"], label=classes) for k, v in pred_box.items() if v["box"] != []
-                    ]
+                    instances = self.process_single(valid_path, text, classes)
 
                     if len(instances) >= 1:
                         datadict[line["img"]] = dict(img=valid_path, instances=instances)
@@ -42,6 +40,17 @@ class MemeDataset(MMOCRDataset):
                     continue
 
         return datadict
+
+
+    def process_single(self, image, text, classes=None):
+        classes = classes if not(classes is None) else -1
+        pred_box = self.generator(image, text)
+        pred_box = order_sent(pred_box)
+
+        instances = [
+            dict(text=v["original"], bbox=v["box"], ignore=v["ignore"], label=classes) for _, v in pred_box.items() if v["box"] != []
+        ]
+        return instances
 
 
     def process(self, img_paths, ann_paths, split):

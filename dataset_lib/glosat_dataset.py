@@ -57,7 +57,7 @@ class GlosatDataset(MMOCRDataset):
 
         correct_dataset = pd.concat(dataset_list, ignore_index=True)
 
-        updated = pd.concat([dataset, correct_dataset]).drop_duplicates(['image_name']).sort_values('image_name')
+        updated = pd.concat([dataset, correct_dataset]).drop_duplicates(['image_name'], keep="last").sort_values('image_name')
 
         return updated
 
