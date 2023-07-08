@@ -14,7 +14,7 @@ dataset_dict = dict(
 
 det_model_dict = dict(
     train_datasets=["glosat.py"],
-    val_datasets=None,
+    val_datasets=["glosat.py"],
     test_datasets=["glosat.py"],
     model="dbnet",
     backbone="resnet18",
@@ -45,7 +45,7 @@ det_model_dict = dict(
 
 recog_model_dict = dict(
     train_datasets=["glosat.py"],
-    val_datasets=None,
+    val_datasets=["glosat.py"],
     test_datasets=["glosat.py"],
     model="abinet",
     backbone=None,
