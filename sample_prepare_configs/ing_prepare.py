@@ -15,7 +15,7 @@ dataset_dict = dict(
 
 det_model_dict = dict(
     train_datasets=["ing.py"],
-    val_datasets=None,
+    val_datasets=["ing.py"],
     test_datasets=["ing.py"],
     model="dbnet",
     backbone="resnet18",
@@ -46,7 +46,7 @@ det_model_dict = dict(
 
 recog_model_dict = dict(
     train_datasets=["ing.py"],
-    val_datasets=None,
+    val_datasets=["ing.py"],
     test_datasets=["ing.py"],
     model="abinet",
     backbone=None,
