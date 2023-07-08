@@ -1,8 +1,12 @@
+
+#multi = dict(img_paths=[], ann_paths=[], split=dict(train=0.8, test=0.1, val=0.1))
+
 dataset_dict = dict(
     type="glosat",
     config_save_dir=None,
-    init_params= dict(name="glosat", tasks = ["det", "recog"], save_dir=None, generator=None),
-    prepare_params=dict(train=dict(img_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/Image/"], ann_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/annotation_info/Batch1/"], split="train"),
+    init_params= dict(name="glosat", tasks = ["det", "recog"], save_dir=None, use_gen=False, generator=None),
+    prepare_params=dict(multi=None,
+                        train=dict(img_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/Image/"], ann_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/annotation_info/Batch1/"], split="train"),
                         test=dict(img_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/Image/"], ann_paths=["C:/Users/ipiri/OneDrive/Desktop/Part 3 Project/glosat/annotation_info/Batch2/"], split="test"),
                         val=None)
 )
@@ -16,6 +20,7 @@ det_model_dict = dict(
     backbone="resnet18",
     neck="fpnc",
     base=None,
+    vocab=list("abcdef12456"),
     epochs=40,
     schedule=None,
     has_val=False,
@@ -46,6 +51,7 @@ recog_model_dict = dict(
     backbone=None,
     neck=None,
     base="_base_abinet-vision.py",
+    vocab="english_digits_symbols_space.txt",
     epochs=10,
     schedule=None,
     has_val=False,

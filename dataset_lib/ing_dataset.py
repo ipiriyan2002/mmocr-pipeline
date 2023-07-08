@@ -8,8 +8,8 @@ from utils.box_translator_utils import *
 
 class IngDataset(MMOCRDataset):
 
-    def __init__(self, name, tasks, save_dir=None, generator=None):
-        super().__init__(name, tasks, save_dir, generator)
+    def __init__(self, name, tasks, save_dir=None, use_gen=True,generator=None):
+        super().__init__(name, tasks, save_dir, use_gen, generator)
 
     """
     Perform basic text abstraction such as removing line delimiters and non-training characters (for now: _@_)
@@ -40,12 +40,16 @@ class IngDataset(MMOCRDataset):
 
         return output
 
+    """
+    Load annotation paths
+    """
     def loadAnns(self, ann_paths):
 
         ann_paths = ann_paths if isinstance(ann_paths, list) else [ann_paths]
 
         filtered_paths = []
 
+        #Load files from folders
         for ann in ann_paths:
             if os.path.isdir(ann):
                 for file in os.listdir(ann):
@@ -55,11 +59,15 @@ class IngDataset(MMOCRDataset):
             else:
                 filtered_paths.append(ann)
 
+        #Join together the different csv files and then return annotation and filenames
         dataset_list = [pd.read_csv(ann) for ann in filtered_paths]
         dataset = pd.concat(dataset_list, ignore_index=True)
 
         return dataset[["annotation", "filename"]]
 
+    """
+    Get the valid image path for any given image name
+    """
     def getImagePath(self, img_paths, image_name):
 
         img_paths = img_paths if isinstance(img_paths, list) else [img_paths]
@@ -79,19 +87,20 @@ class IngDataset(MMOCRDataset):
         """
 
         # Get the data
-
-        global abs_inst
         assert not (img_paths is None), "Provide atleast one image path"
         assert (isinstance(img_paths, (str, list))), "Expected a string or a,list of strings for image paths"
         assert not (ann_paths is None), "Provide atleast one annotation path"
         assert (isinstance(ann_paths, (str, list))), "Expected a string or a,list of strings for annotation paths"
 
+        #Load annotations
         data = self.loadAnns(ann_paths)
 
+        #get the data in a dict form
         data_dict = {}
 
         for index, fname in enumerate(data["filename"]):
 
+            #Abstract instances
             abs_instances = [self.abstractDataDict(ann) for ann in eval(data["annotation"][index])]
 
             try:
@@ -99,6 +108,7 @@ class IngDataset(MMOCRDataset):
             except:
                 continue
 
+            #Get dense texts and boxes
             crop_texts = []
             crop_boxes = []
 
@@ -111,6 +121,7 @@ class IngDataset(MMOCRDataset):
                 else:
                     not_added.append(abs_inst)
 
+            #use MMOCR generator to generate words for localised crops
             instances = []
             if len(crop_texts) > 0:
                 crop_boxes = crop_boxes if not (crop_boxes == []) else None
@@ -124,3 +135,14 @@ class IngDataset(MMOCRDataset):
             data_dict[fname] = dict(img=image_path, instances=instances)
 
         return data_dict
+
+    def process_multi(self, img_paths=None, ann_paths=None, split=None):
+        assert isinstance(split, dict), "Expected a dictionary of split percentages for splits: train, test and val"
+
+        data_dict = self.process(img_paths, ann_paths, split)
+
+        split_percents = [split['train'], split['test'], split['val']]
+
+        data_dicts = self.traintestsplit(data_dict, split_percents)
+
+        return data_dicts

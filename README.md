@@ -64,6 +64,8 @@ Recommend cloning under mmocr directory or in the same directory as mmocr for ea
 >>> pip install pyarrow
 >>> conda install -c jmcmurray json
 >>> conda install -c conda-forge argparse
+>>> conda install -c conda-forge albumentations
+>>> conda install jsonlines
 ```
 
 ## Pipeline
@@ -93,8 +95,9 @@ dataset_dict = [
     dict(
         type="cordv2",   #Available types include "cordv2", "ing", "meme", "glosat"
         config_save_dir=None, #Directory at which MMOCR dataset config are created, keep at None unless needed
-        init_params= dict(name="cordv2", tasks = ["det"], save_dir=None, generator=None),
-        prepare_params=dict(train=dict(img_paths=None, ann_paths=None, split="train"),
+        init_params= dict(name="cordv2", tasks = ["det"], save_dir=None, use_gen=True, generator=None),
+        prepare_params=dict(multi=dict(img_paths=[], ann_paths=[], split=dict(train=0.8, test=0.1, val=0.1)),
+                            train=dict(img_paths=None, ann_paths=None, split="train"),
                             test=dict(img_paths=None, ann_paths=None, split="test"),
                             val=dict(img_paths=None, ann_paths=None, split="val"))
     ),
@@ -116,12 +119,16 @@ Currently we support the following datasets:
 Supports tasks: "det" and "recog"
 
 #### prepare params
+If multi is defined and not None, the given images and annotations are used alongside split percentages to get training, testing and validation datasets.
+If not, then the rest of the params are processed.
 
 The img_paths and ann_paths accept a single (folder/file) path or a list of (folder/file) paths.
 
 When defining custom datasets do remember to support functionality for reading files given a folder
 
 ### Defining a custom generator under init_params:
+
+If using generator set, use_gen to True and if not set to False, to avoid downloading pre-defined weights for MMOCR models
 
 Define the detection, recognition, custom weights, device and save directory for 
 ocr-based bounding box generator.
@@ -158,6 +165,7 @@ det_model_dict = dict(
     backbone="resnet18", #Backbone for model
     neck="fpnc", #Neck of model
     base=None, #Base not needed to be defined for detection model
+    vocab=None, #Vocabulary for recognition models
     epochs=40, #Maximum epoch
     schedule=None, #Predefined Learning rate schedulers, optimizers
     has_val=True, # If validation is included
@@ -195,6 +203,7 @@ recog_model_dict = dict(
     backbone=None, #Backbone not needed to be defined for recognition model
     neck=None, #Neck not needed to be defined for recognition model
     base="_base_abinet-vision.py", #Base for model
+    vocab=None, #Vocabulary for recognition models 
     epochs=40, #Maximum epoch
     schedule=None, #Predefined Learning rate schedulers, optimizers
     has_val=True, # If validation is included
@@ -218,6 +227,8 @@ recog_model_dict = dict(
         ),
     )
 ```
+
+vocab can be either a list of characters or path to text document with the characters to train.
 
 ### Running prepare
 ```commandline

@@ -3,20 +3,24 @@ import mmocr_config_writers.configs.recog_configs as cfg
 from mmocr_config_writers.content_block import ContentBlock
 import os
 
-
+"""
+Recognition model configuration setup
+"""
 class TextRecModelConfig:
     DEFAULT_SCHEDULES = None
     DEFAULT_SCHEDULE = None
     DEFAULT_RUNTIME = None
 
-    def __init__(self, train_datasets, val_datasets, test_datasets, model, base=None, epochs=20,
+    def __init__(self, train_datasets, val_datasets, test_datasets, model, base=None, vocab=None, epochs=20,
                  schedule=None, has_val=False,
                  train_batch_size=64, test_batch_size=32, contents=None):
 
-        self.checkAndAssign(model, base, epochs)
+        #Make sure models, bases, vocab and epochs are valid
+        vocab = self.checkAndAssign(model, base, vocab, epochs)
         self.model = model
         self.contents = contents
 
+        #Get path to schedule
         if schedule is None:
             self.schedule = f"../_base_/schedules/{self.DEFAULT_SCHEDULE}"
         else:
@@ -25,16 +29,21 @@ class TextRecModelConfig:
 
             self.schedule = f"../_base_/schedules/{self.schedule}"
 
+        #Gather datasets
         self.dataset_name, self.dataset_base_paths, self.datasets = self.gatherDatasets(train_datasets, val_datasets,
                                                                                         test_datasets)
         self.fname = f"{model}_{epochs}_{self.dataset_name}.py"
         self.base_file = base if not (base is None) else cfg.model_dict[model]["base"][0]
+        self.vocab = vocab if not (vocab is None) else cfg.DEFAULT_VOCAB
 
         self.has_val = has_val
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
         self.epochs = epochs
 
+    """
+    Clean dataset names such that they are either valid paths or just file names
+    """
     def cleanDatasetNames(self, dataset):
 
         if isinstance(dataset, str):
@@ -54,6 +63,9 @@ class TextRecModelConfig:
 
         return cleaned
 
+    """
+    Gather datasets, by doing pre-processing including cleaning names and formatting MMOCR file paths
+    """
     def gatherDatasets(self, train, val, test):
         assert isinstance(train,
                           (str, list)), "Expect training datasets to be either a single dataset or multiple datasets"
@@ -84,21 +96,77 @@ class TextRecModelConfig:
                 else:
                     dataset_paths.append(f"../_base_/datasets/{ds}")
 
-        datasets = dict(train=train, val=val, test=test)
+        datasets = dict(train=train, test=test, val=val)
 
         return dataset_name, list(set(dataset_paths)), datasets
 
-    def checkAndAssign(self, model, base, epochs):
+    """
+    Save vocabulary if it does not exist if not get file path to vocabulary
+    """
+    def saveVocab(self, vocab):
+
+        vocab_file_save_name = f"custom_{self.dataset_name}.txt"
+
+        if os.path.exists("../mmocr/dicts/"):
+            save_path = os.path.join("../mmocr/dicts/", vocab_file_save_name)
+            ref_save_path =f"{{ fileDirname }}/../../../dicts/{vocab_file_save_name}"
+        elif os.path.exists("../dicts/"):
+            save_path = os.path.join("../dicts/", vocab_file_save_name)
+            ref_save_path =f"{{ fileDirname }}/../../../dicts/{vocab_file_save_name}"
+        else:
+            save_path = f"./{vocab_file_save_name}"
+            ref_save_path =  os.path.join(os.getcwd(), vocab_file_save_name)
+
+        with open(save_path, "w") as f:
+
+            f.write("\n".join(vocab))
+
+        return ref_save_path
+
+
+    """
+    Make sure models, bases, vocabs and epochs are valid
+    """
+    def checkAndAssign(self, model, base, vocab, epochs):
 
         model_dict = cfg.model_dict[model]
 
+
+        #Load runtimes and schedules
         self.DEFAULT_RUNTIME = cfg.DEFAULT_RUNTIME
         self.DEFAULT_SCHEDULE = cfg.DEFAULT_SCHEDULE
         self.DEFAULT_SCHEDULES = cfg.DEFAULT_SCHEDULES
 
         if not (base is None):
             assert (base in model_dict["base"]), f"Available bases for {model} :: {model_dict['base']}, but got {base}"
+
+        if not (vocab is None) and isinstance(vocab, list):
+            vocab = self.saveVocab(vocab)
+        elif not (vocab is None) and not(os.path.exists(vocab)):
+            assert (vocab in cfg.vocabs), f"Available vocabularies include {cfg.vocabs}, but got {vocab}.\n" \
+                                          f"Provide from available vocabularies or a valid vocab txt file"
+
+            vocab = f"{{ fileDirname }}/../../../dicts/{vocab}"
+
         assert (isinstance(epochs, int)), "Epochs should be integer"
+
+        return vocab
+
+    """
+    Get Vocab statements
+    """
+    def getVocabStatement(self, indent):
+
+        vocabs = [
+            indent + "_base_.model.decoder.dictionary.update(",
+            indent + f"\tdict(dict_file={self.vocab}, with_unknown=True, unknown_token=None)",
+            indent + ")"
+        ]
+
+        vocabStatement = StatementBlock(statements=vocabs)
+
+        return vocabStatement
+
 
     def getBaseStatement(self, indent):
         bases = [indent + "_base_ = [",
@@ -123,8 +191,11 @@ class TextRecModelConfig:
 
         for split, split_vals in self.datasets.items():
             pipeline_split = split if split in ["train", "test"] else "test"
-            if split_vals == None:
-                pass
+            if split_vals == None or split_vals == []:
+                if split == "val":
+                    assigns.extend([
+                        indent + f"{head}_val = {head}_test"
+                    ])
             elif len(split_vals) == 1:
                 data_head = split_vals[0].split("/")[-1].split(".")[-2]
                 assigns.extend([indent + f"{head}_{split} = _base_.{data_head}_textrecog_{split}",
@@ -150,6 +221,9 @@ class TextRecModelConfig:
 
         return assign_statement
 
+    """
+    Get prefixes for each evaluator
+    """
     def getPrefixes(self):
         val_prefixes = []
         test_prefixes = []
@@ -170,11 +244,15 @@ class TextRecModelConfig:
 
         baseStatement = self.getBaseStatement(indent)
 
+        vocabStatement = self.getVocabStatement(indent)
+
         head = f"{self.dataset_name}_textrecog"
         assignStatements = self.getAssignStatement(head, indent)
 
         dataloaderStatements = []
 
+        val_prefixes, test_prefixes = self.getPrefixes()
+        eval_statements = []
         for split in ["train", "test", "val"]:
             if self.has_val or (split in ["train", "test"]):
                 isTrain = split == "train"
@@ -189,22 +267,26 @@ class TextRecModelConfig:
 
                 if split in ["val", "test"]:
                     assigns.insert(4, indent + "\tdrop_last=False,")
+
+                    prefixes = val_prefixes if split == "val" else test_prefixes
+                    eval_statements.append(indent + f"{split}_evaluator = dict(dataset_prefixes={prefixes})")
+
+
             else:
                 assigns = ["val_dataloader = test_dataloader"]
+                eval_statements.append("val_evaluator = test_evaluator")
 
             dataloaderStatements.append(StatementBlock(statements=assigns))
             dataloaderStatements.append("")
 
-        val_prefixes, test_prefixes = self.getPrefixes()
 
         evaluatorStatement = StatementBlock(
-            statements=[indent + f"val_evaluator = dict(dataset_prefixes={val_prefixes})",
-                        indent + f"test_evaluator = dict(dataset_prefixes={test_prefixes})",
-                        ""])
+            statements=eval_statements)
         autoscaleStatement = StatementBlock(
             statements=[indent + f"auto_scale_lr = dict(base_batch_size={self.train_batch_size} * 4)"])
 
         finals = [baseStatement, "",
+                  vocabStatement, "",
                   assignStatements, "",
                   ]
         finals.extend(dataloaderStatements)
@@ -232,7 +314,13 @@ class TextRecModelConfig:
         else:
             save_path = f"./{self.fname}"
 
-        with open(save_path, "w") as f:
-            f.write(str(self))
+        if ".py" in save_path:
+            with open(save_path, "w", encoding='utf-8') as f:
+                f.write(str(self))
+        else:
+            with open(save_path, "w") as f:
+                f.write(str(self))
 
         return save_path
+
+#%%

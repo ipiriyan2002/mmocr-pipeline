@@ -3,7 +3,9 @@ import mmocr_config_writers.configs.det_configs as cfg
 from mmocr_config_writers.content_block import ContentBlock
 import os
 
-
+"""
+Detection model configuration creation
+"""
 class TextDetModelConfig:
     DEFAULT_SCHEDULES = None
     DEFAULT_SCHEDULE = None
@@ -13,10 +15,12 @@ class TextDetModelConfig:
                  schedule=None, has_val=False,
                  train_batch_size=16, test_batch_size=1, contents=None):
 
+        #Make sure models, backbones, necks and epochs are valid
         self.checkAndAssign(model, backbone, neck, epochs)
         self.model = model
         self.contents=contents
 
+        #Get path to schedule
         if schedule is None:
             self.schedule = f"../_base_/schedules/{self.DEFAULT_SCHEDULE}"
         else:
@@ -25,8 +29,11 @@ class TextDetModelConfig:
 
             self.schedule = f"../_base_/schedules/{self.schedule}"
 
+        #Gather datasets
         self.dataset_name, self.dataset_base_paths, self.datasets = self.gatherDatasets(train_datasets, val_datasets, test_datasets)
+        #File name for config
         self.fname = f"{model}_{backbone}_{neck}_{epochs}_{self.dataset_name}.py"
+        #Base file name
         self.base_file = f"_base_{model}_{backbone}_{neck}.py"
 
         self.has_val = has_val
@@ -35,6 +42,9 @@ class TextDetModelConfig:
         self.epochs = epochs
 
 
+    """
+    Clean dataset names such that they are either valid paths or just file names
+    """
     def cleanDatasetNames(self, dataset):
 
         if isinstance(dataset, str):
@@ -54,6 +64,9 @@ class TextDetModelConfig:
 
         return cleaned
 
+    """
+    Gather datasets, by doing pre-processing including cleaning names and formatting MMOCR file paths
+    """
     def gatherDatasets(self, train, val, test):
         assert isinstance(train, (str, list)), "Expect training datasets to be either a single dataset or multiple datasets"
         assert isinstance(val, (str, list, type(None))), "Expect validation datasets to be either a single dataset or multiple datasets or None"
@@ -84,24 +97,28 @@ class TextDetModelConfig:
         datasets = dict(train=train, val=val, test=test)
 
         return dataset_name, list(set(dataset_paths)), datasets
-            
 
-
-
-
+    """
+    Make sure models, backbones, necks and epochs are valid
+    """
     def checkAndAssign(self, model, backbone, neck, epochs):
 
         model_dict = cfg.model_dict[model]
 
+        #Load runtimes and schedules
         self.DEFAULT_RUNTIME = cfg.DEFAULT_RUNTIME
         self.DEFAULT_SCHEDULE = cfg.DEFAULT_SCHEDULE
         self.DEFAULT_SCHEDULES = cfg.DEFAULT_SCHEDULES
 
+        #Validate available backbones and necks for model
         assert (backbone in model_dict[
             "backbones"]), f"Avaiable backbones for {model} :: {model_dict['backbones']}, but got {backbone}"
         assert (neck in model_dict["necks"]), f"Avaiable necks for {model} :: {model_dict['necks']}, but got {neck}"
         assert (isinstance(epochs, int)), "Epochs should be integer"
 
+    """
+    Get base loading files
+    """
     def getBaseStatement(self, indent):
         bases = [indent + "_base_ = [",
                  indent + f"\t'{self.base_file}',",
@@ -118,21 +135,31 @@ class TextDetModelConfig:
 
         return baseStatement
 
-
+    """
+    Get assign statements
+    """
     def getAssignStatement(self, head, indent):
 
         lists = []
         assigns = []
 
         for split, split_vals in self.datasets.items():
+            """
+            training pipelines for training
+            testing pipelines for testing and validation
+            """
             pipeline_split = split if split in ["train", "test"] else "test"
+
+
             if split_vals == None:
                 pass
             elif len(split_vals) == 1:
+                #In case of one dataset for training/testing/validation
                 data_head = split_vals[0].split("/")[-1].split(".")[-2]
                 assigns.extend([indent + f"{head}_{split} = _base_.{data_head}_textdet_{split}",
                                 indent + f"{head}_{split}.pipeline = _base_.{pipeline_split}_pipeline"])
             else:
+                #If using a list of datasets
                 list_message = [indent + f"{split}_list = ["]
                 for split_val in split_vals:
                     data_head = split_val.split("/")[-1].split(".")[-2]
@@ -155,11 +182,15 @@ class TextDetModelConfig:
 
     def __str__(self, indent=""):
 
+        #Base statements
         baseStatement = self.getBaseStatement(indent)
 
         head = f"{self.dataset_name}_textrecog"
+
+        #Assign statements
         assignStatements = self.getAssignStatement(head, indent)
 
+        #DataLoader statements
         dataloaderStatements = []
 
         for split in ["train", "test", "val"]:
@@ -179,6 +210,7 @@ class TextDetModelConfig:
             dataloaderStatements.append(StatementBlock(statements=assigns))
             dataloaderStatements.append("")
 
+        #Autoscale statements
         autoscaleStatement = StatementBlock(statements=[f"auto_scale_lr = dict(base_batch_size={self.train_batch_size})"])
 
         finals = [baseStatement, "",
@@ -208,7 +240,12 @@ class TextDetModelConfig:
         else:
             save_path = f"./{self.fname}"
 
-        with open(save_path, "w") as f:
-            f.write(str(self))
+
+        if ".py" in save_path:
+            with open(save_path, "w", encoding='utf-8') as f:
+                f.write(str(self))
+        else:
+            with open(save_path, "w") as f:
+                f.write(str(self))
 
         return save_path

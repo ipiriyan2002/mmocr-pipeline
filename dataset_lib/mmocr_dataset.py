@@ -4,13 +4,18 @@ import json
 from PIL import Image
 from abc import ABC, abstractmethod
 from bbox_gen.generator import MMOCRBoxGenerator
+import random, math
 
-
+"""
+Base class for dataset processing, including JSON file creation for MMOCR training
+"""
 class MMOCRDataset(ABC):
     DEF_TASK_NAMES = ["det", "recog"]
 
-    def __init__(self, name, tasks, save_dir=None, generator=None):
 
+    def __init__(self, name, tasks, save_dir=None, use_gen=True, generator=None):
+
+        #Makes sure defined tasks is a list of tasks
         assert isinstance(tasks, list), f"Expected tasks to be a list, got {type(tasks)}"
 
         # Name of Dataset
@@ -38,15 +43,17 @@ class MMOCRDataset(ABC):
             pass
 
 
-        if generator is None:
-            self.generator = MMOCRBoxGenerator()
-        else:
-            self.generator = MMOCRBoxGenerator(**generator)
+        #get the default generator if generator is None
+        #else customise the generator according to params defined
+        if use_gen:
+            if generator is None:
+                self.generator = MMOCRBoxGenerator()
+            else:
+                self.generator = MMOCRBoxGenerator(**generator)
 
     """
     Check if given tasks is possible
     """
-
     def checkTasks(self, tasks):
 
         for task in tasks:
@@ -54,11 +61,15 @@ class MMOCRDataset(ABC):
             assert (
                     task.lower() in self.DEF_TASK_NAMES), f"Expected tasks {self.DEF_TASK_NAMES}, but received {task.lower()}"
 
+
             if task.lower() == "det":
                 self.isDet = True
             elif task.lower() == "recog":
                 self.isRecog = True
 
+    """
+    Save the data in a JSON format file and return the file name of saved json file
+    """
     def saveJson(self, final_dict, split, task):
 
         fname = f"text{task}_{split}.json"
@@ -70,6 +81,9 @@ class MMOCRDataset(ABC):
         print(f"JSON file for MMOCR task {task} can be found in: {save_path}")
         return fname
 
+    """
+    Get an abstract list of instances given a data dict for an image
+    """
     def getAbstractInstance(self, img_dict):
 
         # All instances
@@ -86,12 +100,16 @@ class MMOCRDataset(ABC):
             if "ignore" in inst.keys():
                 ignore = inst["ignore"]
             else:
-                ignore = 0
+                ignore = False
 
+            #Relays the original text, bounding box (voc format and polygon) of that text, the label and whether to ignore this instance
             instances.append(dict(text=text, bbox=box, bbox_label=0, polygon=poly, ignore=ignore))
 
         return instances
 
+    """
+    Create JSON file for detection
+    """
     def createDetJsonFile(self, data_dict, split):
 
         # meta info
@@ -101,17 +119,28 @@ class MMOCRDataset(ABC):
         # all datalists
         data_list = []
 
+
         for index, img in enumerate(data_dict.keys()):
             img_dict = data_dict[img]
 
+            """
+            Try opening the image for following cases:
+            
+            Case 1: absolute path not given
+            Case 2: absolute path given
+            """
             try:
                 open_img = Image.open(os.path.join(self.save_dir, img_dict["img"]))
             except:
                 open_img = Image.open(img_dict["img"])
+
+            #Get image size
             width, height = open_img.size
 
+            #All instances for said image in an abstracted form (the form for detection)
             instances = self.getAbstractInstance(img_dict)
 
+            #add image data to data_list
             data_list.append(dict(img_path=img_dict["img"], height=height, width=width, instances=instances))
 
         # final dict for detection task
@@ -120,9 +149,18 @@ class MMOCRDataset(ABC):
 
         return fname
 
+    """
+    Given an image, crop all instances appearing in that image and save all crops at save dir
+    
+    Also returns a dictionary of recognition training data for image 
+    """
     def retreiveCropsDict(self, img_name, img_path, anns, save_dir):
 
-        open_img = Image.open(os.path.join(self.save_dir, img_path))
+        if os.path.exists(img_path):
+            img_path = img_path
+        else:
+            img_path = os.path.join(self.save_dir, img_path)
+        open_img = Image.open(img_path)
 
         all_crops = []
 
@@ -149,6 +187,9 @@ class MMOCRDataset(ABC):
 
         return all_crops
 
+    """
+    Perform cropping and generate JSON file for recognition task
+    """
     def createRecogJsonFile(self, data_dict, split):
 
         # meta info
@@ -169,8 +210,10 @@ class MMOCRDataset(ABC):
         for index, img in enumerate(data_dict.keys()):
             img_dict = data_dict[img]
 
+            #All instances of image
             instances = self.getAbstractInstance(img_dict)
 
+            #Crops dict
             all_img_crops = self.retreiveCropsDict(img, img_dict["img"], instances, save_crop_path)
 
             data_list.extend(all_img_crops)
@@ -207,6 +250,38 @@ class MMOCRDataset(ABC):
 
         return fnames
 
+    """
+    Used to split a data dictionary into splits depending on a percentage
+    
+    where split_percent denotes the percentage for [train, test, val] in a list
+    
+    E.X:
+     [0.8, 0.1, 0.1] -> 80% train, 10% test, 10% val
+    """
+    def traintestsplit(self, datadict, split_percent):
+        keys = list(datadict.keys())
+        random.shuffle(keys)
+
+
+        train_split = math.ceil(split_percent[0] * len(keys))
+        train_keys = keys[:train_split]
+
+        
+        test_split = train_split + math.ceil(split_percent[1] * len(keys))
+        test_keys = keys[train_split:test_split]
+
+        val_keys = keys[test_split:]
+        
+        train_dict = {k : datadict[k] for k in train_keys}
+        test_dict = {k : datadict[k] for k in test_keys}
+        val_dict = {k : datadict[k] for k in val_keys}
+
+        return dict(train=train_dict, test=test_dict, val=val_dict)
+
     @abstractmethod
     def process(self, img_paths, ann_paths, split):
+        pass
+
+    @abstractmethod
+    def process_multi(self, img_paths, ann_paths, split):
         pass

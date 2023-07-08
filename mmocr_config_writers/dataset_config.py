@@ -2,7 +2,9 @@ import os
 from mmocr_config_writers.base_config import BaseConfig
 from utils.code_block import *
 
-
+"""
+Create config files for datasets
+"""
 class DatasetConfig(BaseConfig):
 
     def __init__(self, dataset, task, save_path=None):
@@ -45,5 +47,9 @@ class DatasetConfig(BaseConfig):
 
         final_statement_block = StatementBlock(statements=statements)
 
-        with open(self.save_path, "w") as f:
-            f.write(str(final_statement_block))
+        if ".py" in self.save_path:
+            with open(self.save_path, "w", encoding='utf-8') as f:
+                f.write(str(self))
+        else:
+            with open(self.save_path, "w") as f:
+                f.write(str(self))
