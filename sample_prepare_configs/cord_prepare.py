@@ -14,7 +14,7 @@ dataset_dict = dict(
 
 det_model_dict = dict(
     train_datasets=["cordv2.py"],
-    val_datasets=None,
+    val_datasets=["cordv2.py"],
     test_datasets=["cordv2.py"],
     model="dbnet",
     backbone="resnet18",
@@ -45,7 +45,7 @@ det_model_dict = dict(
 
 recog_model_dict = dict(
     train_datasets=["cordv2.py"],
-    val_datasets=None,
+    val_datasets=["cordv2.py"],
     test_datasets=["cordv2.py"],
     model="abinet",
     backbone=None,
