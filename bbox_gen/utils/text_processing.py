@@ -7,6 +7,11 @@ from PIL import Image
 import os
 import json
 import time, math
+
+
+"""
+Using a window size of max_, get the possible matching texts to the current text
+"""
 def getTextMatchCheckers(k, max_, max_len_):
     assert max_ % 2 != 0, "Make sure the maximum boxes is odd number"
     sides = round(max_ % 2)
@@ -27,6 +32,7 @@ def getTextOrder(text, max_=5):
 
     final_dict = {}
     prev_k = 0
+    #Process each sentence one its own and then add to final_dict
     for index, sep_sent in enumerate(sepSentence):
         textSplit = sep_sent.split(' ')
         index = index if num_sep_sent > 1 else -1

@@ -1,14 +1,13 @@
 
-"""
-Currently Ing Dataset is Not working properly
-"""
+#multi = dict(img_paths=[], ann_paths=[], split=dict(train=0.8, test=0.1, val=0.1))
 
 
 dataset_dict = dict(
     type="ing",
     config_save_dir=None,
-    init_params= dict(name="ing", tasks = ["det", "recog"], save_dir=None, generator=None),
-    prepare_params=dict(train=dict(img_paths=[], ann_paths=[], split="train"),
+    init_params= dict(name="ing", tasks = ["det", "recog"], save_dir=None, use_gen=True, generator=None),
+    prepare_params=dict(multi=None,
+                        train=dict(img_paths=[], ann_paths=[], split="train"),
                         test=dict(img_paths=[], ann_paths=[], split="test"),
                         val=None)
 )
@@ -22,6 +21,7 @@ det_model_dict = dict(
     backbone="resnet18",
     neck="fpnc",
     base=None,
+    vocab=None,
     epochs=40,
     schedule=None,
     has_val=True,
@@ -52,6 +52,7 @@ recog_model_dict = dict(
     backbone=None,
     neck=None,
     base="_base_abinet-vision.py",
+    vocab=None,
     epochs=10,
     schedule=None,
     has_val=True,

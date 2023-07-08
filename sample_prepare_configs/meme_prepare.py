@@ -1,8 +1,12 @@
+
+#multi = dict(img_paths=[], ann_paths=[], split=dict(train=0.8, test=0.1, val=0.1))
+
 dataset_dict = dict(
     type="meme",
     config_save_dir=None,
-    init_params= dict(name="meme", tasks = ["det", "recog"], save_dir=None, generator=None),
-    prepare_params=dict(train=dict(img_paths=[], ann_paths=[], split="train"),
+    init_params= dict(name="meme", tasks = ["det", "recog"], save_dir=None, use_gen=True, generator=None),
+    prepare_params=dict(multi=dict(img_paths=["../mmocr/data/meme/img/"], ann_paths=["../mmocr/data/meme/dev.jsonl"], split=dict(train=0.8, test=0.1, val=0.1)),
+                        train=dict(img_paths=[], ann_paths=[], split="train"),
                         test=dict(img_paths=[], ann_paths=[], split="test"),
                         val=None)
 )
@@ -10,12 +14,13 @@ dataset_dict = dict(
 
 det_model_dict = dict(
     train_datasets=["meme.py"],
-    val_datasets=None,
+    val_datasets=["meme.py"],
     test_datasets=["meme.py"],
     model="dbnet",
     backbone="resnet18",
     neck="fpnc",
     base=None,
+    vocab=None,
     epochs=40,
     schedule=None,
     has_val=True,
@@ -40,12 +45,13 @@ det_model_dict = dict(
 
 recog_model_dict = dict(
     train_datasets=["meme.py"],
-    val_datasets=None,
+    val_datasets=["meme.py"],
     test_datasets=["meme.py"],
     model="abinet",
     backbone=None,
     neck=None,
     base="_base_abinet-vision.py",
+    vocab=None,
     epochs=10,
     schedule=None,
     has_val=True,

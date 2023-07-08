@@ -16,6 +16,7 @@ class ModelConfig(BaseConfig):
                  backbone=None,
                  neck=None,
                  base=None,
+                 vocab=None,
                  epochs=1200,
                  schedule=None,
                  has_val=False,
@@ -33,6 +34,7 @@ class ModelConfig(BaseConfig):
         self.model = model
         self.backbone = backbone
         self.base = base
+        self.vocab = vocab
         self.neck = neck
         self.epochs = epochs
         self.schedule = schedule
@@ -55,6 +57,7 @@ class ModelConfig(BaseConfig):
                                       self.has_val, self.train_batch_size, self.test_batch_size, self.contents)
 
         else:
-            return TextRecModelConfig(self.train_datasets,self.val_datasets, self.test_datasets, self.model, self.base, self.epochs, self.schedule
+            return TextRecModelConfig(self.train_datasets,self.val_datasets, self.test_datasets, self.model, self.base,
+                                      self.vocab, self.epochs, self.schedule
                                       ,self.has_val, self.train_batch_size, self.test_batch_size, self.contents)
     

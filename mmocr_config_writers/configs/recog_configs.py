@@ -16,3 +16,13 @@ model_dict = dict(
 DEFAULT_SCHEDULES = ["schedule_adadelta_5e.py", "schedule_adam_step_5e.py", "schedule_adamw_cos_6e.py"]
 DEFAULT_SCHEDULE = "schedule_adadelta_5e.py"
 DEFAULT_RUNTIME = '../_base_/default_runtime.py'
+
+
+#Vocabulary dicts
+
+vocabs = [
+    "chinese_english_digits.txt", "english_digits_symbols.txt", "english_digits_symbols_space.txt",
+    "lower_english_digits.txt", "lower_english_digits_space.txt", "sdmgr_dict.txt"
+]
+
+DEFAULT_VOCAB = "english_digits_symbols_space.txt"

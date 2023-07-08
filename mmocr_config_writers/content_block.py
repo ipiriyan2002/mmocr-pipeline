@@ -1,8 +1,9 @@
 import os
 from utils.code_block import *
 
-
-
+"""
+Class to write parameter settings
+"""
 class ContentBlock:
 
     def __init__(self,
@@ -22,6 +23,9 @@ class ContentBlock:
         self.cfgs = cfgs
 
 
+    """
+    Get hook statements
+    """
     def getHooksStatement(self, indent):
 
         hook_stats = [indent+f"default_hooks = dict(\n"]
@@ -38,6 +42,9 @@ class ContentBlock:
 
         return StatementBlock(statements=hook_stats)
 
+    """
+    Unpack optimizer parameters
+    """
     def unpackOptParams(self, indent):
 
         if self.optimzer_params is None:
@@ -69,6 +76,9 @@ class ContentBlock:
 
         return optimizerStatBlock
 
+    """
+    Unpack the scheduler settings
+    """
     def unpackSchedulers(self, indent):
 
         if self.schedulers is None:
@@ -107,6 +117,10 @@ class ContentBlock:
 
         return schedulerBlock
 
+
+    """
+    Unpack the (train/test/val) cfg file
+    """
     def unpackCfgDict(self, dict_):
 
         result = "dict("
