@@ -241,11 +241,7 @@ class TextDetModelConfig:
             save_path = f"./{self.fname}"
 
 
-        if ".py" in save_path:
-            with open(save_path, "w", encoding='utf-8') as f:
-                f.write(str(self))
-        else:
-            with open(save_path, "w") as f:
-                f.write(str(self))
+        with open(save_path, "w") as f:
+            f.write(str(self))
 
         return save_path
