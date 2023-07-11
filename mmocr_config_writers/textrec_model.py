@@ -109,10 +109,10 @@ class TextRecModelConfig:
 
         if os.path.exists("../mmocr/dicts/"):
             save_path = os.path.join("../mmocr/dicts/", vocab_file_save_name)
-            ref_save_path =f"{{ fileDirname }}/../../../dicts/{vocab_file_save_name}"
+            ref_save_path ="{{ fileDirname }}/../../../dicts/"+f"{vocab_file_save_name}"
         elif os.path.exists("../dicts/"):
             save_path = os.path.join("../dicts/", vocab_file_save_name)
-            ref_save_path =f"{{ fileDirname }}/../../../dicts/{vocab_file_save_name}"
+            ref_save_path ="{{ fileDirname }}/../../../dicts/" + f"{vocab_file_save_name}"
         else:
             save_path = f"./{vocab_file_save_name}"
             ref_save_path =  os.path.join(os.getcwd(), vocab_file_save_name)
@@ -146,7 +146,7 @@ class TextRecModelConfig:
             assert (vocab in cfg.vocabs), f"Available vocabularies include {cfg.vocabs}, but got {vocab}.\n" \
                                           f"Provide from available vocabularies or a valid vocab txt file"
 
-            vocab = f"{{ fileDirname }}/../../../dicts/{vocab}"
+            vocab = f"{{ fileDirname }}/../../../dicts/"+f"{vocab}"
 
         assert (isinstance(epochs, int)), "Epochs should be integer"
 
@@ -159,7 +159,7 @@ class TextRecModelConfig:
 
         vocabs = [
             indent + "_base_.model.decoder.dictionary.update(",
-            indent + f"\tdict(dict_file={self.vocab}, with_unknown=True, unknown_token=None)",
+            indent + f"\tdict(dict_file='{self.vocab}', with_unknown=True, unknown_token=None)",
             indent + ")"
         ]
 
@@ -314,12 +314,8 @@ class TextRecModelConfig:
         else:
             save_path = f"./{self.fname}"
 
-        if ".py" in save_path:
-            with open(save_path, "w", encoding='utf-8') as f:
-                f.write(str(self))
-        else:
-            with open(save_path, "w") as f:
-                f.write(str(self))
+        with open(save_path, "w") as f:
+            f.write(str(self))
 
         return save_path
 
