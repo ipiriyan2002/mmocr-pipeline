@@ -28,10 +28,18 @@ class MMOCRDataset(ABC):
 
         # Save Directory
         if save_dir is None:
-            if os.path.exists("../mmocr/data/"):
-                self.save_dir = os.path.join("../mmocr/data/", f"{name}/")
-            elif os.path.exists("../data/"):
-                self.save_dir = os.path.join("../data/", f"{name}/")
+            if os.path.exists("../mmocr/"):
+                if os.path.exists("../mmocr/mmocr/"):
+                    save_dir_path = "../mmocr/data/"
+                else:
+                    save_dir_path = "../data/"
+
+                try:
+                    os.makedirs(save_dir_path)
+                except:
+                    pass
+
+                self.save_dir = os.path.join(save_dir_path, f"{name}/")
             else:
                 self.save_dir = os.path.join("./data/", f"{name}/")
         else:
