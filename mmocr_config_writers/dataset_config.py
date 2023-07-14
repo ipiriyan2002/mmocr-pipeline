@@ -47,9 +47,5 @@ class DatasetConfig(BaseConfig):
 
         final_statement_block = StatementBlock(statements=statements)
 
-        if ".py" in self.save_path:
-            with open(self.save_path, "w", encoding='utf-8') as f:
-                f.write(str(self))
-        else:
-            with open(self.save_path, "w") as f:
-                f.write(str(self))
+        with open(self.save_path, "w") as f:
+            f.write(str(self))
