@@ -48,4 +48,4 @@ class DatasetConfig(BaseConfig):
         final_statement_block = StatementBlock(statements=statements)
 
         with open(self.save_path, "w") as f:
-            f.write(str(self))
+            f.write(str(final_statement_block))
