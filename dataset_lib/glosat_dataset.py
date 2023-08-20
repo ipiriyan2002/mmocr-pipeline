@@ -148,7 +148,7 @@ class GlosatDataset(MMOCRDataset):
         data = self.loadAnns(def_anns)
 
         #If correct annotations exits, overwrite correct annotations
-        if len(correct_anns) > 1:
+        if len(correct_anns) >= 1:
             data = self.correctAnns(data, correct_anns)
 
         #Group the multiple instances of images
