@@ -66,9 +66,13 @@ class GlosatDataset(MMOCRDataset):
         correct_dataset = pd.concat(dataset_list, ignore_index=True)
 
         #Overwrite image_names
-        updated = pd.concat(
-            [dataset, correct_dataset]
-        ).drop_duplicates(['image_name'], keep='last', ignore_index=True).sort_values('image_name')
+        #updated = pd.concat(
+        #    [dataset, correct_dataset]
+        #).drop_duplicates(['image_name'], keep='last', ignore_index=True).sort_values('image_name')
+
+        merged = dataset.merge(correct_dataset,on="image_name", how="left", suffixes=("", "_correct"))
+        merged["annotation"] = merged["annotation_correct"].fillna(merged["annotation"])
+        updated = merged.drop(columns="annotation_correct")
 
         return updated
 
