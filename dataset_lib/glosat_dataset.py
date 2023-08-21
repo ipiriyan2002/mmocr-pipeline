@@ -64,7 +64,7 @@ class GlosatDataset(MMOCRDataset):
         dataset_list = [pd.read_csv(ann) for ann in correct_anns]
 
         correct_dataset = pd.concat(dataset_list, ignore_index=True)
-
+        correct_dataset = correct_dataset[["annotation","image_name"]]
         #Overwrite image_names
         #updated = pd.concat(
         #    [dataset, correct_dataset]
