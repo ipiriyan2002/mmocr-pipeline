@@ -337,7 +337,7 @@ If that is the case:
  --det <<Model name / config file under work_dirs>>\
   --rec <<Model name / config file under work_dirs>>\
    --out-dir <<Directory to store results>>\
-   --save-vis --save-pred
+   --save_vis --save_pred
 ```
 
 --save-vis : saves the visualization of inference results
